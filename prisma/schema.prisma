@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Organization {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name String 
+  memberships Membership[]
+  tickets Ticket[]
+  invitations Invitation[]
+  credentials Credential[]
+  stripeCustomerId String?
+  stripeCustomer StripeCustomer?
+}
+
+model StripeCustomer {
+  organizationId     String                    @unique
+  organization       Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId         String                    @unique
+
+  subscriptionId     String?
+  subscriptionStatus StripeSubscriptionStatus?
+  productId          String?
+  priceId            String?
+  eventAt            Int?
+}
+
+enum StripeSubscriptionStatus {
+  active
+  incomplete
+  incomplete_expired
+  past_due
+  canceled
+  unpaid
+  trialing
+  paused
+}
+model Credential {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  secretHash     String       @unique
+  name           String
+  lastUsed       DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([organizationId])
+}
+
+model Invitation {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email String
+  tokenHash String @unique
+  organizationId String
+  organization Organization @relation(fields: [organizationId] ,references: [id], onDelete: Cascade )
+  invitedByUserId String?
+  invitedByUser User? @relation(fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  status InvitationStatus @default(PENDING)
+
+  @@id(name: "invitationId", [organizationId, email])
+  @@index([organizationId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED_WITHOUT_ACCOUNT
+}
+
+
+model Membership {
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  joinedAt DateTime @default(now())
+  isActive Boolean
+  membershipRole MembershipRole @default(MEMBER)
+
+  //permissions
+  canDeleteTicket Boolean @default(true)
+
+  @@id(name: "MembershipId", [organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+enum MembershipRole {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id String @id @default(cuid())
+  username String @unique
+  email String @unique
+  emailVerified Boolean @default(false)
+  passwordHash String
+  sessions Session[]
+  passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  memberships Membership[]
+  tickets Ticket[]
+  comments Comment[]
+  invitesByUsers Invitation[]
+}
+
+model EmailVerificationToken {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  code String
+  expiresAt DateTime
+  email String
+  userId String
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  tokenHash String @id
+  expiresAt DateTime
+  userId String
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Session {
+  id String @id
+  expiresAt DateTime
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+
+}
+        
+
+model Ticket {
+  id        String       @id @default(cuid())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  title     String
+  content   String       @db.VarChar(1024)
+  status    TicketStatus @default(Open)
+  deadline String       
+  bounty Int             
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade)
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  comments Comment[] 
+  referencedTickets Ticket[] @relation("TicketReferences")
+  referencingTickets Ticket[] @relation("TicketReferences")
+
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Attachment {
+  id   String @id @default(cuid())
+  name String
+
+  entity    AttachmentEntity
+  ticket    Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId  String?
+  comment   Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String?
+
+  @@index([ticketId])
+  @@index([commentId])
+}
+
+enum AttachmentEntity {
+  TICKET
+  COMMENT
+}
+
+
+model Comment{
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  content String @db.VarChar(1024)
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attachements Attachment[]
+
+  @@index([ticketId])
+  @@index([userId])
+}
+
+enum TicketStatus {
+  Open
+  IN_PROGRESS
+  Done
+}
