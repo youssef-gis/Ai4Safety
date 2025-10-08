@@ -7,6 +7,9 @@ declare global {
             AWS_BUCKET_NAME: string;
             AWS_REGION: string;
             STRIPE_SECRET_KEY: string;
+            NEXT_PUBLIC_SUPABASE_URL: string;
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
+            //SUPABASE_KEY: string;
             
         }
     }

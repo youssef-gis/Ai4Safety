@@ -1,7 +1,9 @@
 import { User } from "@prisma/client";
 
 type Entity={
-    userId: string | null ;
+    userId?: string | null; // <-- optional now
+    inspectionId?: string | null;   // If inspection has project.ownerId
+    conductedByUserId?: string | null; // If inspection has conductedByUserId
 }
 
 export const IsOwner = (
@@ -21,3 +23,5 @@ export const IsOwner = (
         return true;
     }
 }
+
+

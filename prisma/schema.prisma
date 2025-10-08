@@ -20,18 +20,22 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   name String 
+  stripeCustomerId String?
+
   memberships Membership[]
   tickets Ticket[]
   invitations Invitation[]
   credentials Credential[]
-  stripeCustomerId String?
   stripeCustomer StripeCustomer?
+
+  projects Project[]
+
 }
 
 model StripeCustomer {
-  organizationId     String                    @unique
-  organization       Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customerId         String                    @unique
+  organizationId     String             @unique
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId         String             @unique
 
   subscriptionId     String?
   subscriptionStatus StripeSubscriptionStatus?
@@ -50,6 +54,7 @@ enum StripeSubscriptionStatus {
   trialing
   paused
 }
+
 model Credential {
   id             String       @id @default(cuid())
   createdAt      DateTime     @default(now())
@@ -95,6 +100,7 @@ model Membership {
 
   //permissions
   canDeleteTicket Boolean @default(true)
+  canDeleteProject Boolean @default(true)
 
   @@id(name: "MembershipId", [organizationId, userId])
   @@index([organizationId])
@@ -107,11 +113,12 @@ enum MembershipRole {
 }
 
 model User {
-  id String @id @default(cuid())
-  username String @unique
-  email String @unique
-  emailVerified Boolean @default(false)
-  passwordHash String
+  id              String        @id @default(cuid())
+  username        String            @unique
+  email           String            @unique
+  emailVerified   Boolean           @default(false)
+  passwordHash    String
+
   sessions Session[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -119,6 +126,11 @@ model User {
   tickets Ticket[]
   comments Comment[]
   invitesByUsers Invitation[]
+  
+  conductedInspections    Inspection[]            @relation("ConductedByUser")
+
+  projects Project[]
+  
 }
 
 model EmailVerificationToken {
@@ -152,7 +164,6 @@ model Session {
 
 }
         
-
 model Ticket {
   id        String       @id @default(cuid())
   createdAt DateTime     @default(now())
@@ -185,8 +196,10 @@ model Attachment {
   comment   Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId String?
 
+
   @@index([ticketId])
   @@index([commentId])
+  
 }
 
 enum AttachmentEntity {
@@ -201,16 +214,266 @@ model Comment{
   content String @db.VarChar(1024)
   ticketId String
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
   userId String?
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-  attachements Attachment[]
 
-  @@index([ticketId])
+
+  inspectionId String?
+  inspection Inspection? @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+
+  attachements Attachment[]
+  supplements Supplement[]
+
+  @@index([inspectionId])
   @@index([userId])
+
 }
 
 enum TicketStatus {
   Open
   IN_PROGRESS
   Done
+}
+
+model Project {
+  id              String          @id @default(cuid())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  name            String
+  address         String?
+  metadata        Json?        // { "facade_type": "glass", "height_m": 120 }
+  description     String?
+  
+  status          ProjectStatus   @default(ACTIVE) // <-- new field
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade)
+
+  // relationships
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+
+  inspections    Inspection[]
+
+  @@index([userId])
+  @@index([organizationId])
+
+}
+
+
+// An Inspection is a single inspection event for a Project on a specific date.
+model Inspection {
+  id                String           @id @default(cuid())
+  title             String
+  inspectionDate    String
+  status            InspectionStatus @default(SCHEDULED)
+  weatherConditions Json?            // { "temp_c": 25, "wind_kph": 10 }
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Foreign Keys
+  projectId         String
+  conductedByUserId String ?
+
+  // Relations
+  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  conductedByUser   User ?        @relation("ConductedByUser", fields: [conductedByUserId], references: [id], onDelete:SetNull)
+  job               Job[]         // The background job for this inspection
+  analysis          Analysis[]   // The analysis resulting from this inspection
+  supplements       Supplement[] // Raw data like drone images
+  comments          Comment[]
+
+  referencedInspections Inspection[] @relation("InspectionReferences")
+  referencingInspections Inspection[] @relation("InspectionReferences")
+
+  @@index([projectId])
+  @@index([conductedByUserId])
+}
+
+
+
+
+model Job {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  type        AnalysisType
+  status      JobStatus     @default(PENDING)
+  logs        String?       @db.Text
+  
+  // Foreign Keys
+  inspectionId String       // Each inspection kicks off one primary job
+  
+  // Relations
+  inspection   Inspection   @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  analysis     Analysis?
+
+  @@index([inspectionId])
+ 
+}
+
+
+// An Analysis is the computational result derived from an Inspection's data.
+
+model Analysis {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  summary     Json?        // { "total_detections": 150, "critical_issues": 12 }
+
+
+  job     Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId   String @unique
+
+  inspection   Inspection   @relation(fields: [inspectionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inspectionId     String 
+  detections       Detection[]
+  supplements      Supplement[] // Output files like reports or 3D models
+
+  @@index([inspectionId])
+  @@index([jobId])
+}
+
+
+// A Detection is a single, structured finding from an Analysis (e.g., a specific crack).
+model Detection {
+  id                String            @id @default(cuid())
+  createdAt         DateTime          @default(now())
+  type              DetectionType?
+  severity          DetectionSeverity?
+  status            DetectionStatus?   @default(NEW)
+  confidenceScore   Float?
+  notes             String?           @db.Text
+  locationOn3dModel Json?             // { "x": 12.3, "y": 45.6, "z": 78.9 }
+
+  // Foreign Keys
+  analysisId        String
+
+  // Relations
+  analysis          Analysis          @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  images            DetectionOnImage[] // Many-to-many link to images
+
+  @@index([analysisId])
+}
+
+
+// Junction table for the many-to-many relationship between Detections and Images (Supplements).
+model DetectionOnImage {
+  // Foreign Keys
+  detectionId  String
+  supplementId String
+  supplementPath String
+
+  // Data specific to this relationship
+  boundingBox  Json?    // [x1, y1, x2, y2] coordinates on this specific image
+
+  // Relations
+  detection    Detection  @relation(fields: [detectionId], references: [id], onDelete: Cascade)
+  supplement   Supplement @relation(fields: [supplementId], references: [id], onDelete: Cascade)
+
+  @@id([detectionId, supplementId])
+}
+
+
+
+model Supplement {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  name String
+  //type        SupplementType
+  entity      SupplementEntity
+  url         String?     // S3 URL key path
+
+  sizeMB    Float?
+  format    String?   // jpg, tif, laz, etc.
+  metadata  Json?     // EXIF, GPS, resolution, etc.
+
+
+
+  inspection   Inspection? @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  inspectionId String?
+
+  analysis     Analysis?    @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysisId   String?
+
+  comment   Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String?
+  detections   DetectionOnImage[]
+
+  @@index([inspectionId])
+  @@index([analysisId])
+  @@index([commentId])
+
+}
+
+// enum SupplementType {
+//   DRONE_IMAGE
+//   ORTHOMOSAIC
+//   POINT_CLOUD
+//   THREE_D_MODEL
+//   INSPECTION_REPORT
+//   THERMAL_MAP
+// }
+
+enum SupplementEntity {
+  INSPECTION
+  ANALYSIS
+  COMMENT
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AnalysisType {
+  THREE_D_MODELING
+  CRACK_DETECTION
+  THERMAL_ANALYSIS
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  DATA_UPLOADING
+  COMPLETED
+  FAILED
+}
+
+enum AnalysisStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum DetectionType {
+  SPALLING_CRACK
+  EFFLORESCENCE
+  WATER_DAMAGE
+  CORROSION_STAIN
+  INSULATION_FAULT
+}
+
+enum DetectionSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DetectionStatus {
+  NEW
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
 }

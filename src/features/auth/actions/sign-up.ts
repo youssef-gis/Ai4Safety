@@ -8,7 +8,7 @@ import z from "zod";
 import { setSessionCookie } from "../utils/session-cookie";
 import { hashPassword } from "@/features/password/utils/hash-and-verify";
 import { redirect } from "next/navigation";
-import { ticketsPath } from "@/path";
+import { projectsPath } from "@/path";
  
 import { inngest } from "@/lib/inngest";
 import { MembershipRole, Prisma } from "@prisma/client";
@@ -105,5 +105,5 @@ export const SignUp = async (
       return formErrorToActionState(error, formData);
     }
 
-  redirect(ticketsPath());
+  redirect(projectsPath());
 };

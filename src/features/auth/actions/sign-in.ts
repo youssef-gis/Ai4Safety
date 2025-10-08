@@ -11,7 +11,7 @@ import { createSession } from '@/lib/lucia';
 import { generateRandomToken } from '@/utils/crypto';
 import { setSessionCookie } from '../utils/session-cookie';
 import { redirect } from 'next/navigation';
-import { ticketsPath } from '@/path';
+import { projectsPath } from '@/path';
 
 
 const signInSchema = z.object({
@@ -47,7 +47,7 @@ const SignIn =  async (_actionState:ActionState, formData: FormData) => {
       return  formErrorToActionState(error, formData)
     }   
 
-    redirect(ticketsPath())
+    redirect(projectsPath())
     
 
 };

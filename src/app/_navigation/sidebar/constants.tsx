@@ -1,26 +1,31 @@
 import { LucideBook, LucideBookCopy, LucideCircleUser, 
-        LucideLibrary, LucideUsers } from "lucide-react";
+        LucideLibrary, LucideProjector, LucideUsers } from "lucide-react";
 import { NavItem } from "./types";
 import { homePath, organizationPath, 
     profilePath, ticketsByOrganizationPath, 
-    ticketsPath } from "@/path";
+    ticketsPath, projectsPath } from "@/path";
 
 export const navItems: NavItem[] = [
     {
-        title: 'All Tickets',
-        icon: <LucideLibrary />,
-        href: homePath(),
+        title: 'Projects',
+        icon: <LucideProjector />,
+        href: projectsPath(),
     },
-    {
-        title: 'Our Tickets',
-        icon: <LucideBookCopy />,
-        href: ticketsByOrganizationPath(),
-    },
-    {
-        title: 'My tickets',
-        icon: <LucideBook />,
-        href: ticketsPath(),
-    },
+    // {
+    //     title: 'All Tickets',
+    //     icon: <LucideLibrary />,
+    //     href: homePath(),
+    // },
+    // {
+    //     title: 'Our Tickets',
+    //     icon: <LucideBookCopy />,
+    //     href: ticketsByOrganizationPath(),
+    // },
+    // {
+    //     title: 'My tickets',
+    //     icon: <LucideBook />,
+    //     href: ticketsPath(),
+    // },
     {
         separator: true,
         title: 'Account',

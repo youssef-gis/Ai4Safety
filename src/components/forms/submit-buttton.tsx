@@ -15,10 +15,11 @@ type SubmitButtonProps = {
     | "ghost"
     | "link";
   size?: "default" | "sm" | "lg" | "icon";
+  disabled: boolean
 };
 
 
-const SubmitButton = ({label, icon, variant='default', size='default'}: SubmitButtonProps)=>{
+const SubmitButton = ({label, icon, variant='default', size='default', disabled= false}: SubmitButtonProps)=>{
     const {pending} = useFormStatus();
 
     return (

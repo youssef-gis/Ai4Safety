@@ -51,10 +51,9 @@ export const OrganizationList = async ({limitedAccess}: OrganizationListProps) =
                     <OrganizationSwichButton organizationId={organization.id} 
                     trigger={
                     <SubmitButton 
-                        variant={!hasActive? "secondary" : isActive ? "default":"outline"}
-                        icon={<LucideArrowLeftRight className="h-4 w-4"/> }
-                        label={!hasActive? "Activate" :  isActive ? 'Active': 'Switch'} 
-                    />
+                            variant={!hasActive ? "secondary" : isActive ? "default" : "outline"}
+                            icon={<LucideArrowLeftRight className="h-4 w-4" />}
+                            label={!hasActive ? "Activate" : isActive ? 'Active' : 'Switch'} disabled={false}                    />
                     } 
                     
                     />

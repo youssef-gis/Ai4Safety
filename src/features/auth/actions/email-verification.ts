@@ -10,7 +10,7 @@ import { createSession } from '@/lib/lucia';
 import { generateRandomToken } from '@/utils/crypto';
 import { setSessionCookie } from '../utils/session-cookie';
 import { redirect } from 'next/navigation';
-import { ticketsPath } from '@/path';
+import { projectsPath } from '@/path';
 import { getAuthOrRedirect } from '../queries/get-auth-or-rerdirect';
 import { setCookieByKey } from '@/actions/cookies';
 import { validateEmailVerificationCode } from '../utils/validate-email-verification-code';
@@ -70,7 +70,7 @@ const emailVerification =  async (_actionState:ActionState,
     }   
 
     await setCookieByKey('toast', 'Email Verified');
-    redirect(ticketsPath())
+    redirect(projectsPath())
     
 
 };

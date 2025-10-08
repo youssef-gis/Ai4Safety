@@ -5,4 +5,4 @@ export const ACCEPTED = [
   "application/pdf",
 ];
 
-export const MAX_SIZE = 4;
+export const MAX_SIZE = 1000;

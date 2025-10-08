@@ -48,6 +48,22 @@ const comments = [
   {content: 'Third comment from DB'},
 ]
 
+const projects = [
+  {
+      name: "Facade Inspection - Casablanca Tower",
+      address: "Boulevard Zerktouni, Casablanca",
+      description: "Initial facade inspection for cracks",
+      status: "ACTIVE" as const,
+  },
+
+  {
+      name: "ORTHOMOSAIC Mapping - Rabat HQ",
+      address: "Residence Manzah, Benslimane",
+      description: "Initial facade 3D reconstruction",
+      status: "ON_HOLD" as const ,
+  }
+]
+
 const seed = async () => {
     
     await prisma.comment.deleteMany();
@@ -55,6 +71,7 @@ const seed = async () => {
     await prisma.ticket.deleteMany();
     await prisma.organization.deleteMany();
     await prisma.membership.deleteMany();
+    await prisma.project.deleteMany();
 
     const dbOrganization = await prisma.organization.create({
       data:{
@@ -96,6 +113,15 @@ const seed = async () => {
         organizationId: dbOrganization.id,
         })),
     });
+
+    const dbProjects= await prisma.project.createManyAndReturn({
+        data: projects.map((project) => ({
+        ...project,
+        userId: dbUsers[0].id,
+        organizationId: dbOrganization.id,
+        })),
+    });
+
 
     await prisma.comment.createManyAndReturn({
       data: comments.map((comment)=>({

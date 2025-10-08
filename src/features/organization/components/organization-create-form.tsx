@@ -20,7 +20,7 @@ export const OrganizationCreateForm = () => {
             />
             <FieldErrorMsg name="name" actionState={actionState}  />
 
-            <SubmitButton label="Create" />
+            <SubmitButton label="Create" disabled={false} />
         </Form>
      );
 }

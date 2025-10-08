@@ -25,6 +25,7 @@ type TicketMoreMenuProps = {
 }
 
 const TicketMoreMenu = ({ticket, trigger}: TicketMoreMenuProps) => {
+    console.log(ticket.permissions.canDeleteTicket)
     const [deleteButton, deleteDialog] = useConfirmDialog({
         action: deleteTicket.bind(null, ticket.id),
         trigger: (
@@ -66,7 +67,7 @@ const TicketMoreMenu = ({ticket, trigger}: TicketMoreMenuProps) => {
             ))}
         </DropdownMenuRadioGroup>
     )
-
+    
     return (
     <>
     {deleteDialog} 

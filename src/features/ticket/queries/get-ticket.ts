@@ -26,7 +26,7 @@ export const getTicket = async(ticketId:string ) => {
 
     const permissions = await getTicketPermissions({
         userId: user?.id, 
-        organizationId: ticket.id})
+        organizationId: ticket.organizationId})
 
     return {...ticket, isOwner: IsOwner(user, ticket), permissions:{
         canDeleteTicket: IsOwner(user, ticket) && !!permissions.canDeleteTicket,

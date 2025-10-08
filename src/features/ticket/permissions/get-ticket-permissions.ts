@@ -1,24 +1,27 @@
+import { getAdminOrRedirect } from "@/features/membership/queries/get-admin-or-redirect";
 import { prisma } from "@/lib/prisma";
 
 type TicketPermissionProps = {
-    userId: string | undefined;
     organizationId: string | undefined;
+    userId: string | undefined;
 }
 export const getTicketPermissions = async({
+    organizationId,
     userId,
-    organizationId
 }: TicketPermissionProps)  => {
-    if(!userId || ! organizationId){
+    
+    if( ! organizationId || !userId ){
         return {
             canDeleteTicket: false
         };
     }
 
+
     const membership = await prisma.membership.findUnique({
         where:{
             MembershipId:{
-            organizationId,
-            userId,
+                userId,
+                organizationId,
             }
         },
     });
@@ -29,6 +32,7 @@ export const getTicketPermissions = async({
         };
     }
 
+    
     return {
         canDeleteTicket: membership.canDeleteTicket,
     };

@@ -1,5 +1,21 @@
 export const homePath = ()=>"/";
 
+export const projectsPath = ()=>"/projects";
+export const projectPath= (projectId: string)=>`/projects/${projectId}`;
+export const projectCreatePath = ()=> '/projects/create';
+export const projectEditPath=  (projectId: string)=> `/projects/${projectId}/edit`;
+export const inspectionsPath = (projectId: string)=>
+    `/projects/${projectId}/inspections`;
+
+export const inspectionsCreatePath = (projectId: string)=>
+    `/projects/${projectId}/inspections/create`;
+
+export const three_D_viewer_Path =(projectId:string, inspectionId: string)=>
+    `/projects/${projectId}/inspections/${inspectionId}/analysis/3d_viewer`
+
+export const tabular_analysis_Path =(projectId:string, inspectionId: string)=>
+    `/projects/${projectId}/inspections/${inspectionId}/analysis/table`
+
 export const pricingPath = ()=> '/pricing';
 
 export const ticketsPath = ()=> "/tickets";
@@ -40,3 +56,7 @@ export const selectActiveOrganizationPath= ()=>
 
 export const attachmentDownloadPath = (attachmentId: string) =>
   `/api/aws/s3/attachments/${attachmentId}`;
+
+
+export const supplementDownloadPath = (supplementId: string) =>
+  `/api/aws/s3/supplements/${supplementId}`;

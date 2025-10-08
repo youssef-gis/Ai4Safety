@@ -3,7 +3,8 @@ import { ThemeProvider as BaseThemeProvider, ThemeProviderProps} from "next-them
 
 const ThemeProvider = ({children}:ThemeProviderProps) => {
     return ( 
-        <BaseThemeProvider attribute='class' defaultTheme="system" enableSystem>
+        <BaseThemeProvider attribute='class' 
+        defaultTheme="system" enableSystem>
             {children}</BaseThemeProvider>
      );
 }

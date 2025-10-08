@@ -36,7 +36,7 @@ const Sidebar = () => {
   return (
     <nav
       className={cn(
-        "h-screen border-r pt-24",
+        "h-screen border-r pt-10",
         isTransition && "duration-200",
         isOpen ? "md:w-60 w-[78px]" : "w-[78px]"
       )}

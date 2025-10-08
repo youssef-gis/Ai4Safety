@@ -6,9 +6,9 @@ import { useTheme } from "next-themes";
 export const ThemeSwitcher = () => {
     const {theme, setTheme}= useTheme()
     return ( 
-        <Button size='icon' onClick={()=>setTheme(
+        <Button size='icon' variant="outline"  onClick={()=>setTheme(
             theme === 'light'? 'dark':'light')} >
-            {theme==='light'?<Moon />:<SunMedium />}
+            {theme==='light'?<SunMedium />:<Moon />}
             <span className="sr-only" >Toggle Theme</span>
         </Button>
      );

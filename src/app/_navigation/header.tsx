@@ -36,7 +36,7 @@ const Header =  () => {
                     variant:'ghost',
                     })} >
                     <LucideKanban />
-                    <h1 className="ml-2 text-lg font-semibold" >Tickets Bounty</h1>
+                    <h1 className="ml-2 text-lg font-semibold" >Ai4Safety</h1>
                     </Link>
                 </div>
                 <div className="flex gap-x-1" >

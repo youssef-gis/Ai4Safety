@@ -1,4 +1,5 @@
 "use server";
+
 import { setCookieByKey } from "@/actions/cookies";
 import { formErrorToActionState, toActionState } from "@/components/forms/utils/to-action-state";
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
@@ -11,7 +12,7 @@ import { getTicketPermissions } from "../permissions/get-ticket-permissions";
 
 const deleteTicket = async (ticketId: string) => {
     
-    const {user}= await getAuthOrRedirect()
+    const {user}= await getAuthOrRedirect();
 
     try {
         const ticket= await prisma.ticket.findUnique({
@@ -25,8 +26,8 @@ const deleteTicket = async (ticketId: string) => {
         }
 
         const permissions = await getTicketPermissions({
+            organizationId: ticket.organizationId,
             userId: ticket.userId,
-            organizationId: ticket.organizationId
         });
 
         if(!permissions.canDeleteTicket){

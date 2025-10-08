@@ -10,8 +10,6 @@ import { ParsedSearchParams, searchParamsCache } from '@/features/ticket/search-
 
 import { Suspense } from 'react';
 
-//caching process
-//export const dynamic='force-dynamic';
 
 type TicketsPageProps ={
     searchParams: ParsedSearchParams

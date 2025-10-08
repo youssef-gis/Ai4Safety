@@ -47,7 +47,7 @@ export async function GET(
   );
 
   const response = await fetch(presignedUrl);
-
+  
   const headers = new Headers();
   headers.append(
     "content-disposition",
@@ -56,5 +56,5 @@ export async function GET(
 
   return new Response(response.body, {
     headers,
-  });
+  })
 }
