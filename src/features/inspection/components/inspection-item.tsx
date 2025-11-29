@@ -12,7 +12,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {  three_D_viewer_Path } from "@/path";
+import {  analysis_Path, three_D_viewer_Path } from "@/path";
 
 type InspectionItemPageProp = {
    
@@ -34,7 +34,7 @@ export const InspectionItem = ({ inspection}:InspectionItemPageProp) => {
 
     const detailButton =  (
                         <Button variant="default" size="icon" >
-                            <Link href={three_D_viewer_Path(inspection.projectId, inspection.id)} >
+                            <Link href={analysis_Path(inspection.projectId, inspection.id)} >
                                 <LucideArrowRightCircle className="h-4 w-4" />                        
                             </Link>
                         </Button>

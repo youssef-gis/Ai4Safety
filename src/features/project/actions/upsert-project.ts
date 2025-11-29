@@ -23,7 +23,7 @@ const UpsertProject = async (id: string | undefined,
     _actionStat:ActionState ,
     formData: FormData) =>{
     const {user, activeOrganization}= await getAuthOrRedirect()
-    console.log(user, activeOrganization)
+    //console.log(user, activeOrganization)
 
     try{
         if(!user){
@@ -49,7 +49,7 @@ const UpsertProject = async (id: string | undefined,
 
         const dbdata= {
             ...data,
-            userId: user.id,
+            creatorId: user.id,
             //bounty: toCent(data.bounty)
         }
 

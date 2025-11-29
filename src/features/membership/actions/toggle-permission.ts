@@ -5,7 +5,7 @@ import { toActionState } from "@/components/forms/utils/to-action-state";
 import { revalidatePath } from "next/cache";
 import { membershipsPath } from "@/path";
 
-type PermissionKey='canDeleteTicket';
+type PermissionKey='canDeleteProject';
 
 export const togglePermission = async ({userId,
             organizationId,

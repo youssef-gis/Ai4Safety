@@ -1,38 +1,57 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import React from 'react';
-
-import type { Position } from './types/position';
+import React, { useEffect, useRef, useState } from 'react';
 import { CesiumType } from './types/cesium';
+import { Detection } from '@prisma/client';
+import { type Entity } from 'cesium';
+import { DefectCandidate } from './hooks/use-drawing-manager';
 
+// Define props for the Dynamic Component
 export interface CesiumComponentProps {
     CesiumJs: CesiumType;
     cesiumContainerRef: React.RefObject<HTMLDivElement | null> ;
     onFullscreenToggle?: () => void;
     isMapFullscreen?: boolean;
     tilesetUrl: string;
+    inspectionId: string;
+    initialDetections: Detection[];
+    // Event Handlers
+    onDefectDetected?: (candidate: DefectCandidate, tempEntities: Entity[]) => void;
+    onDefectSelected?: (defect: Detection) => void;
+    focusedDefectId?: string | null;
 }
 
-const CesiumDynamicComponent = dynamic(() => import('./Cesium')  , {
+const CesiumDynamicComponent = dynamic(() => import('./Cesium'), {
     ssr: false
 });
 
 type WrapperProps = {
   tilesetUrl: string;
+  inspectionId: string;
+  initialDetections: Detection[];
+  // Parent Listeners
+  onDefectDetected?: (candidate: DefectCandidate, tempEntities: Entity[]) => void;
+  onDefectSelected?: (defect: Detection) => void;
+  focusedDefectId?: string | null;
+  children?: React.ReactNode; 
 };
 
-export const CesiumWrapper:React.FunctionComponent<WrapperProps> = ({tilesetUrl}
-) => {
-    const [CesiumJs, setCesiumJs] = React.useState<CesiumType | null>(null);
-    const [isMapFullscreen, setIsMapFullscreen] = React.useState(false);
-    const cesiumContainerRef = React.useRef<HTMLDivElement>(null); 
-    //const tilesetUrl = tilesetUrl;
-
-    // ✅ NEW: This ref is for the PARENT container that holds both the map and the toolbar
-    const fullscreenWrapperRef = React.useRef<HTMLDivElement>(null);
+export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
+    tilesetUrl, 
+    inspectionId, 
+    initialDetections,
+    onDefectDetected,
+    onDefectSelected,
+    focusedDefectId,
+    children
+}) => {
+    const [CesiumJs, setCesiumJs] = useState<CesiumType | null>(null);
+    const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+    const cesiumContainerRef = useRef<HTMLDivElement>(null); 
+    const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
     
-    React.useEffect(() => {
+    useEffect(() => {
         if (CesiumJs !== null) return
         const CesiumImportPromise = import('cesium');
         Promise.all([CesiumImportPromise]).then((promiseResults) => {
@@ -44,29 +63,19 @@ export const CesiumWrapper:React.FunctionComponent<WrapperProps> = ({tilesetUrl}
     const handleFullscreenToggle = () => {
         if (fullscreenWrapperRef.current) {
             if (!document.fullscreenElement) {
-                // Request fullscreen for the Cesium container
                 fullscreenWrapperRef.current.requestFullscreen().catch(err => {
-                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
                 });
-               // setIsMapFullscreen(true);
             } else {
-                // Exit fullscreen
                 document.exitFullscreen();
-              //  setIsMapFullscreen(false);
             }
         }
     };
 
-    // Listen for fullscreen change events to update state if user exits via ESC key
-    React.useEffect(() => {
+    useEffect(() => {
         const handleFullscreenChange = () => {
-           // if (!document.fullscreenElement) {
-           //     setIsMapFullscreen(false);
-           // }
-            // This listener now reliably syncs our React state with the browser's state
             setIsMapFullscreen(!!document.fullscreenElement);
         };
-
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -74,26 +83,25 @@ export const CesiumWrapper:React.FunctionComponent<WrapperProps> = ({tilesetUrl}
     }, []);
 
     return (
-        <div ref={fullscreenWrapperRef} className="relative w-full h-full">
-
+        <div ref={fullscreenWrapperRef} className="relative w-full h-full bg-black">
             {CesiumJs ? (
-                <CesiumDynamicComponent
-                    CesiumJs={CesiumJs}
-                    cesiumContainerRef={cesiumContainerRef} // Pass the ref down
-                    onFullscreenToggle={handleFullscreenToggle} // Pass the toggle function if Cesium needs it
-                    isMapFullscreen={isMapFullscreen} // Pass the state down
-                    tilesetUrl={tilesetUrl}
-                />
+                    <CesiumDynamicComponent
+                        CesiumJs={CesiumJs}
+                        cesiumContainerRef={cesiumContainerRef}
+                        onFullscreenToggle={handleFullscreenToggle} 
+                        isMapFullscreen={isMapFullscreen} 
+                        tilesetUrl={tilesetUrl}
+                        inspectionId={inspectionId}
+                        initialDetections={initialDetections}
+                        // Pass new handlers down
+                        onDefectDetected={onDefectDetected}
+                        onDefectSelected={onDefectSelected}
+                        focusedDefectId= {focusedDefectId}
+                    />
             ) : null}
-
+            {children}
         </div>
-   
     );
 };
-
-//     return (
-//         CesiumJs ? <CesiumDynamicComponent CesiumJs={CesiumJs}  /> : null
-//     )
-// }
 
 export default CesiumWrapper;

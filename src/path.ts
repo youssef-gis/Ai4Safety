@@ -16,6 +16,9 @@ export const three_D_viewer_Path =(projectId:string, inspectionId: string)=>
 export const tabular_analysis_Path =(projectId:string, inspectionId: string)=>
     `/projects/${projectId}/inspections/${inspectionId}/analysis/table`
 
+export const analysis_Path =(projectId:string, inspectionId: string)=>
+    `/projects/${projectId}/inspections/${inspectionId}/analysis`
+
 export const pricingPath = ()=> '/pricing';
 
 export const ticketsPath = ()=> "/tickets";

@@ -1,4 +1,3 @@
-
 import {  usePathname } from "next/navigation";
 import { getAuth } from "@/features/auth/queries/get-auth";
 import { useEffect, useState } from "react";

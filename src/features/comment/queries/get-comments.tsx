@@ -4,11 +4,11 @@ import { getAuth } from "@/features/auth/queries/get-auth";
 import { IsOwner } from "@/features/auth/utils/is-owner";
 import { prisma } from "@/lib/prisma";
 
-export const getComments = async (ticketId: string, cursor?: string) => {
+export const getComments = async (inspectionId: string, cursor?: string) => {
   const { user } = await getAuth();
 
   const where = {
-    ticketId,
+    inspectionId,
     id: {
       lt: cursor,
     },
@@ -27,7 +27,7 @@ export const getComments = async (ticketId: string, cursor?: string) => {
             username: true,
           },
         },
-        attachements: true,
+        supplements: true,
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     }),

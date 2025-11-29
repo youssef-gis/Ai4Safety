@@ -9,7 +9,7 @@ import { togglePermission } from "../actions/toggle-permission";
 type PermissionToggleProps = {
     userId: string,
     organizationId: string,
-    permissionKey:'canDeleteTicket',
+    permissionKey:'canDeleteProject',
     permissionValue:boolean
 }
 export const PermissionToggle = ({
@@ -32,6 +32,7 @@ export const PermissionToggle = ({
                 icon={permissionValue ? <LucideCheck /> : <LucideBan />}
                 size="icon"
                 variant={permissionValue ? 'secondary': 'outline'}
+                disabled
             />
         </Form>
      );

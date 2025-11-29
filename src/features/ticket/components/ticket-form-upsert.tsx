@@ -76,7 +76,7 @@ const TicketUpsertForm = ({ticket} : TicketUpdateFormProps) => {
             </div>
         </div>
 
-        <SubmitButton label= {ticket ? 'Edit': 'Create'}/>
+        <SubmitButton label= {ticket ? 'Edit': 'Create'}  disabled/>
         
     </Form>);
 }

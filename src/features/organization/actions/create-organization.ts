@@ -4,7 +4,7 @@ import { ActionState, formErrorToActionState } from "@/components/forms/utils/to
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { inngest } from "@/lib/inngest";
 import { prisma } from "@/lib/prisma";
-import { membershipsPath, ticketsPath } from "@/path";
+import { membershipsPath, projectsPath } from "@/path";
 import { redirect } from "next/navigation";
 import z from "zod";
 
@@ -70,6 +70,6 @@ export const createOrganization = async (
         link: membershipsPath(organization!.id),
         })
     );   
-    redirect(ticketsPath());
+    redirect(projectsPath());
 
 };

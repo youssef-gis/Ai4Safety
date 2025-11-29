@@ -1,24 +1,107 @@
-import CesiumWrapper from "@/components/3D_Viewer/CesiumWrapper";
+'use client'
 
-async function getPosition() {
-  //Mimic server-side stuff...
-  return {
-    position: {
-      lat: 39.953436,
-      lng: -75.164356
-    }
-  }
-};
+import { useState } from "react";
+import CesiumWrapper from "@/components/3D_Viewer/CesiumWrapper";
+import { Detection } from "@prisma/client";
+import { DetectionUpsertForm } from "@/features/defects/components/defect-form-upsert";
+import { DefectCandidate } from "@/components/3D_Viewer/hooks/use-drawing-manager";
+import { Entity } from "cesium";
+import { useRouter } from "next/navigation";
+// Removed Portal import
 
 type AnalaysisProps= {
   tilesetUrl:string;
+  inspectionId:string;
+  initialDetections: Detection[];
+  focusedDefectId?: string | null;
 }
 
-export const  Analysis3DViewer =  ({tilesetUrl}: AnalaysisProps) => {
+export const Analysis3DViewer = ({ tilesetUrl, inspectionId, initialDetections, focusedDefectId }: AnalaysisProps) => {
+    const router = useRouter();
+    
+    const [defectCandidate, setDefectCandidate] = useState<DefectCandidate | null>(null);
+    const [tempEntities, setTempEntities] = useState<Entity[]>([]); 
+    const [editingDefect, setEditingDefect] = useState<Detection | null>(null);
 
-  //const fetchedPosition = await getPosition();
-  return (
-      <CesiumWrapper tilesetUrl = {tilesetUrl} />
+    const handleDefectDetected = (candidate: DefectCandidate, entities: Entity[]) => {
+        setDefectCandidate(candidate);
+        setTempEntities(entities);
+        setEditingDefect(null); 
+    };
 
-  )
+    const handleDefectSelected = (defect: Detection) => {
+        setEditingDefect(defect);
+        setDefectCandidate(null); 
+    };
+
+    const handleFormSuccess = () => {
+        setDefectCandidate(null);
+        setEditingDefect(null);
+        setTempEntities([]); 
+        router.refresh();
+    };
+
+    const handleFormCancel = () => {
+        setDefectCandidate(null);
+        setEditingDefect(null);
+    };
+
+        // Common style for both forms 
+    const formContainerStyle = "absolute top-2 right-2 z-[1000] w-80 md:w-96 bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[calc(100%-1rem)]";
+
+
+    return (
+        <div className="relative w-full h-full overflow-hidden">
+            <CesiumWrapper 
+                tilesetUrl={tilesetUrl}  
+                inspectionId={inspectionId} 
+                initialDetections={initialDetections}
+                onDefectDetected={handleDefectDetected} 
+                onDefectSelected={handleDefectSelected}
+                focusedDefectId= {focusedDefectId}
+            >
+                {/* Children rendered INSIDE the fullscreen div */}
+                
+                {/* Form for CREATING a new defect */}
+                {defectCandidate && (
+                    // Added 'pointer-events-auto' to ensure interactions work if parent has 'pointer-events-none'
+                    <div className={formContainerStyle}>
+                        <div className="p-4 overflow-y-auto flex-1 overscroll-contain">
+                            <DetectionUpsertForm
+                                inspectionId={inspectionId}
+                                geometry={{
+                                    type: defectCandidate.type,
+                                    coordinates: defectCandidate.positions.map((pos: any) => ({ 
+                                        x: pos.x, y: pos.y, z: pos.z 
+                                    })),
+                                    measurement: defectCandidate.measurement,
+                                    labelPosition: defectCandidate.labelPosition ? {
+                                        x: defectCandidate.labelPosition.x,
+                                        y: defectCandidate.labelPosition.y,
+                                        z: defectCandidate.labelPosition.z
+                                    } : undefined 
+                                }}
+                                onCancel={handleFormCancel}
+                                onFormSuccess={handleFormSuccess}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Form for EDITING an existing defect */}
+                {editingDefect && (
+                    <div className={formContainerStyle}>
+                        <div className="p-4 overflow-y-auto flex-1 overscroll-contain">
+                            <DetectionUpsertForm
+                                detection={editingDefect}
+                                inspectionId={inspectionId}
+                                onCancel={handleFormCancel}
+                                onFormSuccess={handleFormSuccess}
+                            />
+                        </div>
+                    </div>
+                )}
+            </CesiumWrapper>
+        </div>
+    )
 }

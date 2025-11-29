@@ -1,7 +1,7 @@
 import { User } from "@prisma/client";
 
 type Entity={
-    userId?: string | null; // <-- optional now
+    creatorId?: string | null; // <-- optional now
     inspectionId?: string | null;   // If inspection has project.ownerId
     conductedByUserId?: string | null; // If inspection has conductedByUserId
 }
@@ -14,10 +14,10 @@ export const IsOwner = (
         return false;
     }
 
-    if(!entity.userId){
+    if(!entity.creatorId){
         return false;
     }
-    if(authUser.id !== entity.userId){
+    if(authUser.id !== entity.creatorId){
         return false;
     } else {
         return true;

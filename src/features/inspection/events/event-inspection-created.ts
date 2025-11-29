@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest";
 import { prisma } from "@/lib/prisma";
+import { NonRetriableError } from "inngest";
 
 
 export type InspectionStartedEventArgs = {
@@ -16,12 +17,14 @@ export const inspectionStartedEvent = inngest.createFunction(
       inspectionId
     } = event.data;
 
-    // Example: Call FastAPI /process-job endpoint
+    // Call FastAPI /process-job endpoint
     await step.run("call-fastapi", async () => {
+      //console.log("Secret Length:", (process.env.INTERNAL_SERVICE_SECRET || "").length);
       const response = await fetch(`${process.env.FASTAPI_URL}/ingest`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Internal-Secret": process.env.INTERNAL_SERVICE_SECRET || "",
         },
         body: JSON.stringify({
           inspectionId,

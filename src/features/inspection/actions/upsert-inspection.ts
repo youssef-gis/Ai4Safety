@@ -56,12 +56,14 @@ const UpsertInspection = async (projectId: string ,inspectionId: string,filesKey
             
         });
 
+        const isoInspectionDate = new Date(data_parsed.inspectionDate).toISOString();
+
         inspection = await inspectionData.createInspection({
             id: inspectionId,
             userId: user.id,
             title: data_parsed.title,
             projectId: data_parsed.projectId,
-            inspectionDate: data_parsed.inspectionDate,
+            inspectionDate: isoInspectionDate,
             jobs: data_parsed.jobs,
             options: {
                 includeUser: true,

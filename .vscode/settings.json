@@ -1,4 +1,5 @@
 {
     "editor.fontLigatures": false ,
-    "explorer.compactFolders": false
+    "explorer.compactFolders": false,
+    "prisma.pinToPrisma6": true
 }

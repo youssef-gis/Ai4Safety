@@ -19,16 +19,17 @@ model Organization {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? //  If this has a date, the org is "soft deleted"
   name String 
   stripeCustomerId String?
 
   memberships Membership[]
-  tickets Ticket[]
   invitations Invitation[]
   credentials Credential[]
   stripeCustomer StripeCustomer?
 
   projects Project[]
+  auditLogs AuditLog[]
 
 }
 
@@ -99,7 +100,6 @@ model Membership {
   membershipRole MembershipRole @default(MEMBER)
 
   //permissions
-  canDeleteTicket Boolean @default(true)
   canDeleteProject Boolean @default(true)
 
   @@id(name: "MembershipId", [organizationId, userId])
@@ -123,14 +123,33 @@ model User {
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   memberships Membership[]
-  tickets Ticket[]
   comments Comment[]
   invitesByUsers Invitation[]
   
   conductedInspections    Inspection[]            @relation("ConductedByUser")
 
   projects Project[]
+  auditLogs AuditLog[]
   
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  action      String   // e.g. "INSPECTION_APPROVED", "PROJECT_DELETED"
+  entityType  String   // e.g. "Project", "Inspection"
+  entityId    String   // The ID of the thing being changed
+  
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  details     Json?    // Store what changed: { "oldStatus": "PENDING", "newStatus": "APPROVED" }
+
+  @@index([organizationId])
+  @@index([entityId])
 }
 
 model EmailVerificationToken {
@@ -164,56 +183,12 @@ model Session {
 
 }
         
-model Ticket {
-  id        String       @id @default(cuid())
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  title     String
-  content   String       @db.VarChar(1024)
-  status    TicketStatus @default(Open)
-  deadline String       
-  bounty Int             
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete:Cascade)
-  organizationId String
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  attachments Attachment[]
-  comments Comment[] 
-  referencedTickets Ticket[] @relation("TicketReferences")
-  referencingTickets Ticket[] @relation("TicketReferences")
-
-  @@index([userId])
-  @@index([organizationId])
-}
-
-model Attachment {
-  id   String @id @default(cuid())
-  name String
-
-  entity    AttachmentEntity
-  ticket    Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  ticketId  String?
-  comment   Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  commentId String?
-
-
-  @@index([ticketId])
-  @@index([commentId])
-  
-}
-
-enum AttachmentEntity {
-  TICKET
-  COMMENT
-}
 
 
 model Comment{
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   content String @db.VarChar(1024)
-  ticketId String
-  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   
   userId String?
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -223,7 +198,6 @@ model Comment{
   inspection Inspection? @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
 
-  attachements Attachment[]
   supplements Supplement[]
 
   @@index([inspectionId])
@@ -231,16 +205,12 @@ model Comment{
 
 }
 
-enum TicketStatus {
-  Open
-  IN_PROGRESS
-  Done
-}
 
 model Project {
   id              String          @id @default(cuid())
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
   name            String
   address         String?
   metadata        Json?        // { "facade_type": "glass", "height_m": 120 }
@@ -248,8 +218,8 @@ model Project {
   
   status          ProjectStatus   @default(ACTIVE) // <-- new field
 
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete:Cascade)
+  creatorId String?
+  user User? @relation(fields: [creatorId], references: [id], onDelete:SetNull)
 
   // relationships
   organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -257,7 +227,7 @@ model Project {
 
   inspections    Inspection[]
 
-  @@index([userId])
+  @@index([creatorId])
   @@index([organizationId])
 
 }
@@ -267,7 +237,7 @@ model Project {
 model Inspection {
   id                String           @id @default(cuid())
   title             String
-  inspectionDate    String
+  inspectionDate    DateTime
   status            InspectionStatus @default(SCHEDULED)
   weatherConditions Json?            // { "temp_c": 25, "wind_kph": 10 }
   createdAt         DateTime         @default(now())
@@ -298,10 +268,16 @@ model Inspection {
 model Job {
   id          String        @id @default(cuid())
   createdAt   DateTime      @default(now())
+  startedAt   DateTime?     
+  completedAt DateTime?     
   type        AnalysisType
   status      JobStatus     @default(PENDING)
   logs        String?       @db.Text
   
+  errorMessage String?      @db.Text //  Separate system logs from error output
+  
+  attemptCount Int          @default(0) //  Helps you retry failed jobs automatically
+
   // Foreign Keys
   inspectionId String       // Each inspection kicks off one primary job
   
@@ -365,7 +341,9 @@ model DetectionOnImage {
   supplementPath String
 
   // Data specific to this relationship
-  boundingBox  Json?    // [x1, y1, x2, y2] coordinates on this specific image
+  boundingBox  Json?
+  // STRICT FORMAT: [x, y, width, height] normalized (0.0 to 1.0)
+  // Example: [0.5, 0.5, 0.1, 0.2] = Center of image, 10% width, 20% height
 
   // Relations
   detection    Detection  @relation(fields: [detectionId], references: [id], onDelete: Cascade)
@@ -406,14 +384,14 @@ model Supplement {
 
 }
 
-// enum SupplementType {
-//   DRONE_IMAGE
-//   ORTHOMOSAIC
-//   POINT_CLOUD
-//   THREE_D_MODEL
-//   INSPECTION_REPORT
-//   THERMAL_MAP
-// }
+ enum SupplementType {
+   DRONE_IMAGE
+   ORTHOMOSAIC
+   POINT_CLOUD
+   THREE_D_MODEL
+   INSPECTION_REPORT
+   THERMAL_MAP
+ }
 
 enum SupplementEntity {
   INSPECTION

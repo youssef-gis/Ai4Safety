@@ -33,7 +33,8 @@ type ProjectItemProps={
 export  const ProjectItem =  ({project, isDetail, 
     attachments, referencedInspections,comments} : ProjectItemProps) => {
 
-    const detailButton= project.isOwner ? (
+    //project.isOwner ? : null
+    const detailButton=  (
                 <Button asChild variant='outline' size='icon' >
             <Link prefetch
                 href={projectPath(project.id)} 
@@ -41,7 +42,7 @@ export  const ProjectItem =  ({project, isDetail,
                 <LucideSquareArrowOutUpRight  className='h-4 w-4'/>
             </Link>
         </Button> 
-    ): null;
+    );
 
     const editButton= project.isOwner ? (
         <Button variant="outline" size='icon' asChild>
@@ -82,7 +83,7 @@ export  const ProjectItem =  ({project, isDetail,
                 </CardContent>
                 <CardFooter className="flex justify-between">
                     <p className="text-sm text-muted-foreground">
-                    {format(project.updatedAt, 'yyyy-MM-dd')} by {project.user.username}
+                    {format(project.updatedAt, 'yyyy-MM-dd')} by {project.user?.username}
                     </p>
                     <p className="text-sm text-muted-foreground">
                     {project.address }
@@ -91,7 +92,7 @@ export  const ProjectItem =  ({project, isDetail,
             </Card>
         <div className='flex flex-col gap-y-1' >
                 { isDetail ? (<> {editButton} {moreMenu}</>) : 
-                            (<>{detailButton} {editButton} </>)}
+                            (<>{detailButton} {moreMenu} </>)}
         </div>
         </div>
         {isDetail ? 

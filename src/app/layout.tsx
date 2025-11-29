@@ -3,11 +3,12 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
-import Header from "@/app/_navigation/header";
+import Header from "@/app/(saas)/_navigation/header";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { Sidebar } from "@/app/_navigation/sidebar/components/sidebar";
-import ReactQueryProvider from "./_providers/react-query/react-query-provider";
+import { Sidebar } from "@/app/(saas)/_navigation/sidebar/components/sidebar";
+import ReactQueryProvider from "@/app/(saas)/_providers/react-query/react-query-provider";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,25 +32,24 @@ export default function RootLayout({
 }>) {
   return (
     <html suppressHydrationWarning lang="en">
+      {/* <head>
+        <Script
+          id="cesium-widgets-css"
+          strategy="beforeInteractive"
+        >{`
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = '/cesium/Widgets/widgets.css';
+          document.head.appendChild(link);
+        `}</Script>
+      </head> */}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
       <NuqsAdapter>
       <ThemeProvider>
       <ReactQueryProvider>
-        <Header />
-        <div className="flex h-screen overflow-hidden border-collapse">
-          <Sidebar />
-          <main className="
-                min-h-screen flex-1
-                overflow-y-auto overflow-x-hidden
-                py-8 px-8
-                bg-secondary/20
-                flex flex-col
-              " >
           {children}
-          </main>
-        </div>
         <Toaster expand />
       </ReactQueryProvider>
       </ThemeProvider>

@@ -76,7 +76,7 @@ const ProjectUpsertForm = ({project} : ProjectUpdateFormProps) => {
             {/* </div> */}
         {/* </div> */}
 
-        <SubmitButton label= {project ? 'Edit': 'Create'}/>
+        <SubmitButton label= {project ? 'Edit': 'Create'} disabled/>
         
     </Form>);
 }

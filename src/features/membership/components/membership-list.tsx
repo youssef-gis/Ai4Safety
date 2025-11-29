@@ -62,8 +62,8 @@ export const MembershipList = async({organizationId}:MembershipListPageProp) => 
                                 <PermissionToggle
                                     userId={membership.userId}
                                     organizationId={membership.organizationId}
-                                    permissionKey="canDeleteTicket"
-                                    permissionValue= {membership.canDeleteTicket}
+                                    permissionKey="canDeleteProject"
+                                    permissionValue= {membership.canDeleteProject}
                                 />
                             </TableCell>
                             <TableCell className="flex justify-end gap-x-2">
