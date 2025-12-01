@@ -16,9 +16,26 @@ import { Button } from '../ui/button';
 import { Pencil, Square, Trash2, Hand, LucideFullscreen } from 'lucide-react';
 import { useDrawingManager } from './hooks/use-drawing-manager';
 import { CesiumComponentProps } from './CesiumWrapper';
+import { LayerControl, SeverityVisibility } from './components/layer-control';
+import { DefectSearch } from './components/defect-search';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 //import "@cesium/widgets/styles.css";
+
+const getSeverityColor = (CesiumJs: CesiumType, severity: string) => {
+    switch (severity) {
+        case 'CRITICAL':
+            return CesiumJs.Color.RED;
+        case 'HIGH':
+            return CesiumJs.Color.ORANGE;
+        case 'MEDIUM':
+            return CesiumJs.Color.YELLOW;
+        case 'LOW':
+            return CesiumJs.Color.LIME; // or CYAN
+        default:
+            return CesiumJs.Color.WHITE; // Fallback
+    }
+};
 
 export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     CesiumJs,
@@ -28,8 +45,14 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     tilesetUrl, 
     initialDetections,
     onDefectDetected,
-    onDefectSelected, // Destructured here
+    onDefectSelected, 
     focusedDefectId,
+    showTileset,
+    
+    onToggleTileset,
+    severityVisibility,
+    onToggleSeverity,
+    onToggleAllDefects,
 }) => {
     const router = useRouter();
     
@@ -92,7 +115,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     }, [CesiumJs, drawingMode, onDefectSelected]);
 
 
-    // NEW: Effect to Fly To Defect when focusedDefectId changes
+    // Effect to Fly To Defect when focusedDefectId changes
     useEffect(() => {
         if (!cesiumViewer.current || !focusedDefectId || !defectsDataSourceRef.current) return;
 
@@ -129,6 +152,34 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     }, [viewerReady, cesiumContainerRef]);
 
     
+        // EFFECT: Toggle Tileset Visibility
+    useEffect(() => {
+        if (!cesiumViewer.current || !currentTilesetRef.current) return;
+        currentTilesetRef.current.show = showTileset;
+    }, [showTileset]);
+
+    // EFFECT: Toggle Defects Visibility
+    useEffect(() => {
+        if (!cesiumViewer.current || !defectsDataSourceRef.current) return;
+        
+        const entities = defectsDataSourceRef.current.entities.values;
+        
+        entities.forEach(entity => {
+            // Get the severity stored in the property bag
+            // Note: Cesium properties can be tricky. We need to access the raw value.
+            if (entity.properties && entity.properties.hasProperty('detectionData')) {
+                const defectData = entity.properties.getValue(CesiumJs.JulianDate.now())['detectionData'];
+                const severity = defectData.severity as keyof SeverityVisibility;
+                
+                // Show if the toggle for this severity is TRUE
+                entity.show = severityVisibility[severity] ?? true; 
+            }
+        });
+        
+        // Force a re-render of the scene
+        cesiumViewer.current.scene.requestRender();
+
+    }, [severityVisibility, CesiumJs]);
 
     // 3. Initialize Viewer (With Strict Cleanup)
     useEffect(() => {
@@ -140,6 +191,8 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
         const imageryViewModels = basemapsLayers(CesiumJs);
         
         const viewer = new CesiumJs.Viewer(cesiumContainerRef.current, {
+            creditContainer: document.createElement("div"),
+            geocoder: false,
             imageryProviderViewModels: imageryViewModels,
             selectedImageryProviderViewModel: imageryViewModels[0],
             animation: false,
@@ -166,28 +219,6 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
 
         cesiumViewer.current = viewer;
         setViewerReady(true);
-
-        const handler = new CesiumJs.ScreenSpaceEventHandler(cesiumViewer.current.scene.canvas);
-        
-        handler.setInputAction((click: any) => {
-            if (drawingMode !== 'none') return;
-
-            const pickedObject = cesiumViewer.current!.scene.pick(click.position);
-            
-            if (CesiumJs.defined(pickedObject) && pickedObject.id instanceof CesiumJs.Entity) {
-                const entity = pickedObject.id;
-                // Check if the entity has the custom detectionData property
-                if (entity.properties && entity.properties.hasProperty('detectionData')) {
-                    
-                    const currentTime = cesiumViewer.current!.clock.currentTime;
-                    const defectData = entity.properties.getValue(currentTime)['detectionData'];
-                    
-                    if (onDefectSelected && defectData) {
-                        onDefectSelected(defectData);
-                    }
-                }
-            }
-        }, CesiumJs.ScreenSpaceEventType.LEFT_CLICK);
 
         // Cleanup to prevent "Fragment Shader" crash on re-mount
         return () => {
@@ -287,6 +318,10 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
             const propertyBag = new CesiumJs.PropertyBag();
             propertyBag.addProperty('detectionData', detection);
             
+            //  Get the Dynamic Color
+            const severityColor = getSeverityColor(CesiumJs, detection.severity || 'LOW');
+
+
             const entity = new CesiumJs.Entity({
                 id: detection.id,
                 properties: propertyBag,
@@ -296,13 +331,13 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 entity.polyline = new CesiumJs.PolylineGraphics({
                     positions: positions,
                     width: 5,
-                    material: new CesiumJs.ColorMaterialProperty(CesiumJs.Color.RED),
+                     material: new CesiumJs.ColorMaterialProperty(severityColor),
                     arcType: new CesiumJs.ConstantProperty(CesiumJs.ArcType.NONE),
                 });
             } else if (location.type === 'polygon') {
                 entity.polygon = new CesiumJs.PolygonGraphics({
                     hierarchy: new CesiumJs.PolygonHierarchy(positions),
-                    material: new CesiumJs.ColorMaterialProperty(CesiumJs.Color.RED.withAlpha(0.5)),
+                    material: new CesiumJs.ColorMaterialProperty(severityColor.withAlpha(0.5)),
                     perPositionHeight: new CesiumJs.ConstantProperty(true),
                     outline: true,
                     outlineColor: CesiumJs.Color.BLACK,
@@ -334,12 +369,43 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
         });
     }, [viewerReady, initialDetections, CesiumJs, clearActiveDrawing]);
 
+    // Handler for search selection
+    const handleSearchSelect = (id: string) => {
+        if (!cesiumViewer.current || !defectsDataSourceRef.current) return;
+        
+        const entity = defectsDataSourceRef.current.entities.getById(id);
+        if (entity) {
+            cesiumViewer.current.flyTo(entity, {
+                duration: 1.5,
+                offset: new CesiumJs.HeadingPitchRange(
+                    0, 
+                    CesiumJs.Math.toRadians(-45), 
+                    30 // Closer zoom for search result
+                )
+            });
+            cesiumViewer.current.selectedEntity = entity;
+        }
+    };
+
+
     return (
         <div className="relative w-full h-full">
             <div ref={cesiumContainerRef} className="w-full h-full" />
 
             {/* Toolbar with Dark Mode fix */}
-            <div className="absolute top-4 left-4 z-10 flex gap-2 p-2 bg-card border rounded-lg shadow-md">
+            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 p-2 bg-card border border-border rounded-lg shadow-md w-12 items-center">
+                
+                {/* Layer Control */}
+                <LayerControl 
+                    showTileset={showTileset}
+                    toggleTileset={onToggleTileset}
+                    severityVisibility={severityVisibility}
+                    toggleSeverity={onToggleSeverity}
+                    toggleAllDefects={onToggleAllDefects}
+                />
+                
+                <div className="h-px w-full bg-border my-1" />
+
                 <Button
                     onClick={() => startDrawing('none')}
                     variant={drawingMode === 'none' ? 'default' : 'outline'}
@@ -361,7 +427,9 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 >
                     <Square className="w-4 h-4 rotate-45" />
                 </Button>
-                <div className="border-l mx-2" />
+
+                <div className="h-px w-full bg-border my-1" />
+                
                 <Button
                     onClick={() => clearActiveDrawing()}
                     variant="destructive"
@@ -370,6 +438,50 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                     <Trash2 className="w-4 h-4" />
                 </Button>
             </div>
+
+            {/* --- TOP RIGHT CONTROLS CONTAINER --- */}
+            <div className="absolute top-1 right-30 z-10 flex flex-col items-end gap-2">
+                
+                {/* Search & Primary Actions */}
+                <div className="flex items-center gap-2">
+                    {/* The Search Bar (Expands to the left) */}
+                    <DefectSearch 
+                        defects={initialDetections} 
+                        onSelectDefect={handleSearchSelect} 
+                    />
+                  
+                    {/* <Button variant="secondary" size="icon" className="shadow-md">
+                        <Settings className="h-4 w-4" />
+                    </Button> */}
+                </div>
+
+                {/* Row 2: Secondary Controls (Optional - stacked below) */}
+            </div>
+
+        {   isMapFullscreen &&
+            (         
+            <div className="absolute bottom-4 left-4 z-10 bg-card/80 backdrop-blur-sm p-3 rounded-lg border border-border shadow-lg text-xs">
+                <div className="font-semibold mb-2 text-foreground">Defect Severity</div>
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> 
+                        <span className="text-muted-foreground">Critical</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full shadow-sm"></div> 
+                        <span className="text-muted-foreground">High</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-yellow-400 rounded-full shadow-sm"></div> 
+                        <span className="text-muted-foreground">Medium</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div> 
+                        <span className="text-muted-foreground">Low</span>
+                    </div>
+                </div>
+            </div>)
+        }
 
             <Button
                 onClick={onFullscreenToggle}

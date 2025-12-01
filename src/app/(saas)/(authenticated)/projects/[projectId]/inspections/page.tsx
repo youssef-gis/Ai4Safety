@@ -26,7 +26,7 @@ const Inspectionspage = async({params}:InspectionsPageProps) => {
             <Heading 
                 title="Inspections"
                 description="Manage the inspections related to your project"
-                tabs={< ProjectBreadCrumbs />}
+                tabs={< ProjectBreadCrumbs projectName={project.name} />}
                 actions= {
                     isAdmin && <Button asChild>
                         <Link href={inspectionsCreatePath(projectId)} >

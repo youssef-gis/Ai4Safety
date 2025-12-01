@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Attachments } from "@/features/attachments/components/attachments";
 import { ACCEPTED } from "@/features/supplements/constants";
 import { v4 as uuidv4 } from 'uuid';
+import { LucideBox, LucideCloudUpload, LucideScanLine } from "lucide-react";
 
 type InspectionUpdateFormProps = {
     projectId: string;
@@ -34,6 +35,7 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
 
     const [actionState, action]= useActionState(
         UpsertInspection.bind(null, projectId, inspectionId , s3Keys), EMPTY_ACTION_STATE)
+    const [fileCount, setFileCount] = useState(0);
     
 
     const datePickerImperativeHandleRef =useRef<ImperativeHandleFromDatePicker>(null);
@@ -95,82 +97,99 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
     }; 
 
     return (
-       
-     <Form action={action} actionState={actionState} onSuccess={handleSuccess}>
-        <div className="flex flex-col gap-y-6">
-              
-            <div className="flex items-center gap-x-4">
-                    <Label htmlFor="title"  className="w-40">Inspection Title</Label>
-                    <Input id="title" name='title' type="text" className='flex-1'
-                    // defaultValue={ (actionState.payload?.get('title') as string ) 
-                    //                 ?? inspection?.title} 
-                    />
-            </div>
+     <Form action={action} actionState={actionState} onSuccess={handleSuccess} >
+        <div className="space-y-6">
+            
+            {/* Section 1: Basic Info */}
+            <div className="space-y-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="title">Dataset Name</Label>
+                    <Input id="title" name='title' placeholder="e.g. 'North Façade - Post Storm Scan'" />
                     <FieldErrorMsg actionState={actionState} name="title" />
+                </div>
 
-            <div className="flex items-center gap-x-4">
-                    <Label htmlFor="inspectionDate" className="w-40" >Inspection Date</Label>
-
+                <div className="grid gap-2">
+                    <Label htmlFor="inspectionDate">Capture Date</Label>
+                    <div className="text-xs text-muted-foreground mb-1">When were these photos taken?</div>
                     <DatePicker   
                         id="inspectionDate"
                         name="inspectionDate"
-                        // defaultValue={
-                        //     (actionState.payload?.get("inspectionDate")  as string) ??
-                        //     inspection?.inspectionDate
-                        //         }
-                        imperativeHandleRef={datePickerImperativeHandleRef }
-                       
-                        />
-            </div>
+                        imperativeHandleRef={datePickerImperativeHandleRef}
+                    />
                     <FieldErrorMsg actionState={actionState} name="inspectionDate" />
-
-                    
-            
-            <div className="flex  items-center gap-x-4 ">
-
-                <Label className="w-40">Jobs To Run</Label>
-
-                    <div className="flex flex-col gap-y-2">
-
-                        <label className="flex items-center gap-x-2">
-                            <input type="checkbox" name="jobs" value="THREE_D_MODELING" />
-                            <span>3D Reconstruction</span>
-                        </label>
-
-                        <label className="flex items-center gap-x-2">
-                            <input type="checkbox" name="jobs" value="CRACK_DETECTION" />
-                            <span>Crack Detection</span>
-                        </label>
-                    </div>
+                </div>
             </div>
+
+            {/* Section 2: Processing Jobs (Visual Cards) */}
+            <div className="space-y-3">
+                <Label>AI Processing Jobs</Label>
+                <div className="grid grid-cols-2 gap-4">
+                    {/* 3D Reconstruction Card */}
+                    <label className="cursor-pointer">
+                        <input type="checkbox" name="jobs" value="THREE_D_MODELING" className="peer sr-only" />
+                        <div className="flex flex-col items-center justify-center p-4 border-2 border-muted rounded-xl hover:bg-muted/50 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                            <LucideBox className="w-6 h-6 mb-2 text-muted-foreground peer-checked:text-primary" />
+                            <span className="text-sm font-medium">3D Model</span>
+                        </div>
+                    </label>
+
+                    {/* Crack Detection Card */}
+                    <label className="cursor-pointer">
+                        <input type="checkbox" name="jobs" value="CRACK_DETECTION" className="peer sr-only" />
+                        <div className="flex flex-col items-center justify-center p-4 border-2 border-muted rounded-xl hover:bg-muted/50 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                            <LucideScanLine className="w-6 h-6 mb-2 text-muted-foreground peer-checked:text-primary" />
+                            <span className="text-sm font-medium">AI Defect Scan</span>
+                        </div>
+                    </label>
+                </div>
                 <FieldErrorMsg actionState={actionState} name="jobs" />
+            </div>
 
-            <div className="flex  items-center gap-x-4 ">
-
-                <Input
+            {/* Section 3: File Upload (Better UX) */}
+            <div className="space-y-2">
+                <Label>Drone Imagery</Label>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 text-center hover:bg-muted/20 transition-colors relative">
+                    <input
                         name="files"
-                        id="files"
                         type="file"
                         multiple
                         accept={ACCEPTED.join(",")}
                         onChange={handleFileUpload}
-                        
-                /> 
-                {uploading && <p>Uploading files to S3...</p>}
-                {/* Hidden inputs with uploaded S3 keys */}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                            <LucideCloudUpload className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="text-sm">
+                            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            JPG, PNG (Max 100MB per file)
+                        </p>
+                        {fileCount > 0 && (
+                            <div className="mt-2 text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                                {fileCount} files selected
+                            </div>
+                        )}
+                    </div>
+                </div>
+                {uploading && <p className="text-xs text-blue-500 animate-pulse">Uploading to secure storage...</p>}
+                
+                {/* Hidden inputs for keys */}
                 {s3Keys.map((key, idx) => (
-                <input key={idx} type="hidden" name="files" value={key} />
-                ))}           
-                    
-            </div>    
-
+                    <input key={idx} type="hidden" name="files" value={key} />
+                ))}
                 <FieldErrorMsg actionState={actionState} name="files" />
+            </div>
         
         </div>   
-                
-                <SubmitButton label= 'Start Inspection'  disabled={uploading} /> 
+        
+        <div className="pt-4 grid">
+            <SubmitButton label='Start Processing' disabled={!uploading} size="lg" /> 
+        </div>
     </Form>
-    
+
     );
 
 }

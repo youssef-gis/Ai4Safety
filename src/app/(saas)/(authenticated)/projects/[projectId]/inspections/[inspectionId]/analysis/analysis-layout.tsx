@@ -11,6 +11,8 @@ import {
 import { Analysis3DViewer } from "@/features/analysis/components/analysis_3d_viewer";
 import DefectTable from "@/features/defects/defect-table";
 import { Detection } from "@prisma/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InspectionAnalytics } from "@/features/analysis/components/inspection-analytics";
 
 interface AnalysisLayoutProps {
   projectId: string;
@@ -71,13 +73,31 @@ export function AnalysisLayout({
         minSize={10}
         className="bg-transparent"
       >
-        <div className="h-full w-full overflow-auto p-4">
-          <DefectTable 
-            data={initialDetections} 
-            onViewDefect={handleViewDefect} 
-            inspectionId={inspectionId}
-          />
-        </div>
+        <Tabs defaultValue="table" className="h-full flex flex-col">
+            <div className="flex items-center justify-between px-4 pt-2 border-b">
+                <TabsList className="h-8">
+                    <TabsTrigger value="table" className="text-xs">Defect Log</TabsTrigger>
+                    <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
+                </TabsList>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-hidden">
+                <TabsContent value="table" className="h-full w-full p-0 m-0 overflow-auto">
+                    <div className="p-4">
+                        <DefectTable 
+                            data={initialDetections} 
+                            onViewDefect={handleViewDefect} 
+                            // inspectionId={inspectionId} // Removed if not needed
+                        />
+                    </div>
+                </TabsContent>
+                
+                <TabsContent value="analytics" className="h-full w-full p-0 m-0 overflow-auto">
+                    <InspectionAnalytics />
+                </TabsContent>
+            </div>
+        </Tabs>
       </ResizablePanel>
 
     </ResizablePanelGroup>
