@@ -100,7 +100,14 @@ model Membership {
   membershipRole MembershipRole @default(MEMBER)
 
   //permissions
-  canDeleteProject Boolean @default(true)
+  canDeleteProject Boolean @default(false)
+  canEditProject      Boolean @default(false)
+
+  canDeleteInspection Boolean @default(false)
+  canEditInspection   Boolean @default(false)
+
+  canDeleteDefect Boolean @default(false)
+  canEditDefect   Boolean @default(false)
 
   @@id(name: "MembershipId", [organizationId, userId])
   @@index([organizationId])
@@ -118,6 +125,13 @@ model User {
   email           String            @unique
   emailVerified   Boolean           @default(false)
   passwordHash    String
+
+    // --- ADD THESE FIELDS ---
+  firstName       String?
+  lastName        String?
+  role            String?        
+  //image           String?         
+  // ------------------------
 
   sessions Session[]
   passwordResetTokens PasswordResetToken[]

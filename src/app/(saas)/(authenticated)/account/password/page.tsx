@@ -6,21 +6,21 @@ import { PasswordChangeForm } from "@/features/password/components/password-chan
 const PasswordPage = () => {
    
     return ( 
-        <>
-            <div className="fles-1 flex flex-col gap-y-8" >
-                <Heading title="Password" 
-                    description="Your account password "
-                    tabs={<AccountTabs /> }        
+        
+            <div className="flex-1 flex flex-col gap-y-8" >
+                    <Heading title="Password" 
+                        description="Your account password "
+                        tabs={<AccountTabs /> }        
+                    />
+                <div className="flex-1 flex flex-col items-center" >
+                    <CardElement title="Change Password" 
+                    description="Enter your current password"
+                    className="w-full max-w-lg"
+                    content={<PasswordChangeForm />} 
                 />
-            <div className="flex-1 flex flex-col items-center" >
-                <CardElement title="Change Password" 
-                description="Enter your current password"
-                className="w-full max-w-[420px]"
-                content={<PasswordChangeForm />} 
-            />
+                </div>
             </div>
-            </div>
-        </>
+        
      );
 }
  

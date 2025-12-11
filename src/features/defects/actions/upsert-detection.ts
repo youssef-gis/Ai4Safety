@@ -11,6 +11,7 @@ import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-rerdirect
 import { IsOwner } from '@/features/auth/utils/is-owner';
 import { DetectionType, DetectionSeverity, DetectionStatus } from '@prisma/client';
 import { getAnalysis } from '@/features/analysis/actions/get-analysis';
+import { getDefectPermissions } from '../permissions/get-defect-permissions';
 
 
 const LocationCoordinatesSchema = z.object({ x: z.number(), y: z.number(), z: z.number() });
@@ -39,19 +40,29 @@ const UpsertDetection = async (id: string | undefined,
     formData: FormData) =>{
     const {user, activeOrganization}= await getAuthOrRedirect();
 
-    const analysis= await getAnalysis(inspectionId);
+    if(!user || !activeOrganization){
+            return toActionState('Error', 'Not Authenticated')
+        }
 
-    console.log("Analysis of the inspection: ",inspectionId, analysis)
+    const analysis= await getAnalysis(inspectionId);
     
     if(!analysis){
         return toActionState('Error', 'Analysis not found or not authorized.');
     };
 
     try{
-        if(!user || !activeOrganization){
-            return toActionState('Error', 'Not Authenticated')
-        }
+
         if(id){
+            
+            const permissions = await getDefectPermissions({
+                userId: user.id,
+                organizationId: activeOrganization.id
+            });
+    
+            if (!permissions.canEditDefect) {
+                return toActionState('Error', 'You do not have permission to edit defects.');
+            }
+            
             const detection = await prisma.detection.findFirst({
                  where: {
                      id,

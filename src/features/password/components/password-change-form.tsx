@@ -7,18 +7,24 @@ import { Input } from "@/components/ui/input";
 
 import { useActionState } from "react";
 import { passwordChange } from "../actions/password-change";
+import { Label } from "@/components/ui/label";
 
 
 export const PasswordChangeForm = () => {
     const [actionState, action]= useActionState(passwordChange, EMPTY_ACTION_STATE)
     return ( 
-        <Form action={action} actionState={actionState} >
-
-            <Input name="password" placeholder="Password" type="password"  
-                defaultValue={ actionState.payload?.get('password') as string } />
-            <FieldErrorMsg name="password" actionState={actionState} />
-
-            <SubmitButton label="Send Email" />
+        <Form action={action} actionState={actionState}>
+            <div className="space-y-6" >
+                <div className="space-y-2">
+                    <Label htmlFor="current_password">Current Password</Label>
+                    <Input name="password" placeholder="Password" type="password"  
+                            defaultValue={ actionState.payload?.get('password') as string } />
+                    <FieldErrorMsg name="password" actionState={actionState} />
+                </div>
+                <div className="flex justify-center pt-2">
+                    <SubmitButton label="Send Email" disabled={false} />
+                </div>
+            </div>
         </Form>
      );
 }

@@ -8,6 +8,7 @@ import { type Entity } from 'cesium';
 import { DefectCandidate } from './hooks/use-drawing-manager';
 import { Spinner } from '../spinner';
 import { SeverityVisibility } from './components/layer-control'; 
+import { MapLayer } from './types/map';
 
 // Define props for the Dynamic Component
 export interface CesiumComponentProps {
@@ -15,6 +16,8 @@ export interface CesiumComponentProps {
     cesiumContainerRef: React.RefObject<HTMLDivElement | null> ;
     onFullscreenToggle?: () => void;
     isMapFullscreen?: boolean;
+    proxyBaseUrl:string;
+    camerasUrl: string;
     tilesetUrl: string;
     inspectionId: string;
     initialDetections: Detection[];
@@ -29,6 +32,7 @@ export interface CesiumComponentProps {
     severityVisibility: SeverityVisibility;
     onToggleSeverity: (key: keyof SeverityVisibility) => void;
     onToggleAllDefects: (show: boolean) => void;
+    layers: MapLayer[];
 }
 
 
@@ -45,7 +49,10 @@ const CesiumDynamicComponent = dynamic(() => import('./Cesium'), {
 });
 
 type WrapperProps = {
+ proxyBaseUrl:string;
+  camerasUrl:string;
   tilesetUrl: string;
+  layers: MapLayer[];
   inspectionId: string;
   initialDetections: Detection[];
   // Parent Listeners
@@ -60,7 +67,10 @@ type WrapperProps = {
 };
 
 export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
+    proxyBaseUrl,
+    camerasUrl,
     tilesetUrl, 
+    layers,
     inspectionId, 
     initialDetections,
     onDefectDetected,
@@ -133,13 +143,15 @@ export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
     }, []);
 
     return (
-        <div ref={fullscreenWrapperRef} className="relative w-full h-full bg-black">
+        <div ref={fullscreenWrapperRef} className="relative w-full h-full bg-black" suppressHydrationWarning={true} >
             {CesiumJs ? (
                     <CesiumDynamicComponent
                         CesiumJs={CesiumJs}
                         cesiumContainerRef={cesiumContainerRef}
                         onFullscreenToggle={handleFullscreenToggle} 
-                        isMapFullscreen={isMapFullscreen} 
+                        isMapFullscreen={isMapFullscreen}
+                        proxyBaseUrl={proxyBaseUrl}
+                        camerasUrl={camerasUrl} 
                         tilesetUrl={tilesetUrl}
                         inspectionId={inspectionId}
                         initialDetections={initialDetections}
@@ -153,6 +165,7 @@ export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
                         severityVisibility={severityVisibility}
                         onToggleSeverity={handleToggleSeverity}
                         onToggleAllDefects={handleToggleAllDefects}
+                        layers={layers}
                     />
             ) : null}
             {children}

@@ -5,18 +5,28 @@ import { EMPTY_ACTION_STATE } from "@/components/forms/utils/to-action-state";
 import { LucideBan, LucideCheck } from "lucide-react";
 import { useActionState } from "react";
 import { togglePermission } from "../actions/toggle-permission";
+import { Membership } from "@prisma/client";
+
+type PermissionKey = keyof Pick<Membership,  
+  'canDeleteInspection' | 
+  'canEditInspection' |
+  'canDeleteDefect' |
+  'canEditDefect'
+>;
 
 type PermissionToggleProps = {
     userId: string,
     organizationId: string,
-    permissionKey:'canDeleteProject',
-    permissionValue:boolean
+    permissionKey: PermissionKey,
+    permissionValue:boolean,
+    disabled?:boolean
 }
 export const PermissionToggle = ({
     userId,
     organizationId,
     permissionKey,
-    permissionValue
+    permissionValue,
+    disabled = false
 }: PermissionToggleProps) => {
     const [actionState, action] = useActionState(
         togglePermission.bind(null, {
@@ -31,8 +41,9 @@ export const PermissionToggle = ({
             <SubmitButton 
                 icon={permissionValue ? <LucideCheck /> : <LucideBan />}
                 size="icon"
-                variant={permissionValue ? 'secondary': 'outline'}
-                disabled
+                variant={permissionValue ? 'secondary': 'ghost'} // Ghost looks cleaner in a table
+                //className={permissionValue ? "text-green-600 bg-green-50 hover:bg-green-100" : "text-muted-foreground"}
+                disabled={disabled}
             />
         </Form>
      );

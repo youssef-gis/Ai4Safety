@@ -11,28 +11,34 @@ import { getProjectPermissions } from "../permissions/get-project-permissions";
 
 const deleteProject = async (projectId: string) => {
     
-    const {user}= await getAuthOrRedirect()
+    const {user, activeOrganization}= await getAuthOrRedirect();
+    if (!user || !activeOrganization) {
+        return toActionState('Error', 'Not Authenticated');
+    }
+    
 
     try {
-        const project= await prisma.project.findUnique({
-            where:{
-                id: projectId,
-            },
-        });
-
-        if(!project || !IsOwner(user, project)){
-            return toActionState('Error', 'Not authorized');
-        }
-
         const permissions = await getProjectPermissions({
-            userId: project.userId,
-            organizationId: project.organizationId
+            userId: user.id,
+            organizationId: activeOrganization.id
         });
 
         if(!permissions.canDeleteProject){
             return toActionState('Error', 'Not authorized');
         }
 
+        const project= await prisma.project.findUnique({
+            where:{
+                id: projectId,
+            },
+            include:{
+                user:true,
+            }
+        });
+
+        if(!project || !IsOwner(user, project)){
+            return toActionState('Error', 'Not authorized');
+        }
 
         await prisma.project.delete({
         where:{

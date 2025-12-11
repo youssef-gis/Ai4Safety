@@ -7,16 +7,23 @@ import { DetectionUpsertForm } from "@/features/defects/components/defect-form-u
 import { DefectCandidate } from "@/components/3D_Viewer/hooks/use-drawing-manager";
 import { Entity } from "cesium";
 import { useRouter } from "next/navigation";
+import { MapLayer } from "@/components/3D_Viewer/types/map";
 // Removed Portal import
 
 type AnalaysisProps= {
+  proxyBaseUrl:string;
+  camerasUrl:string;
   tilesetUrl:string;
   inspectionId:string;
   initialDetections: Detection[];
   focusedDefectId?: string | null;
+  canDeleteDefect: boolean;
+  canEditDefect: boolean;
+  layers: MapLayer[];
 }
 
-export const Analysis3DViewer = ({ tilesetUrl, inspectionId, initialDetections, focusedDefectId }: AnalaysisProps) => {
+export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectionId, initialDetections,
+     focusedDefectId, canDeleteDefect, canEditDefect, layers }: AnalaysisProps) => {
     const router = useRouter();
     
     const [defectCandidate, setDefectCandidate] = useState<DefectCandidate | null>(null);
@@ -52,14 +59,17 @@ export const Analysis3DViewer = ({ tilesetUrl, inspectionId, initialDetections, 
 
     return (
         <div className="relative w-full h-full overflow-hidden">
-            <CesiumWrapper 
-                tilesetUrl={tilesetUrl}  
-                inspectionId={inspectionId} 
+            <CesiumWrapper
+                proxyBaseUrl={proxyBaseUrl}
+                camerasUrl={camerasUrl} 
+                tilesetUrl={tilesetUrl}
+                inspectionId={inspectionId}
                 initialDetections={initialDetections}
-                onDefectDetected={handleDefectDetected} 
+                onDefectDetected={handleDefectDetected}
                 onDefectSelected={handleDefectSelected}
-                focusedDefectId= {focusedDefectId}
-            >
+                focusedDefectId={focusedDefectId}
+                layers={layers} 
+                >
                 {/* Children rendered INSIDE the fullscreen div */}
                 
                 {/* Form for CREATING a new defect */}
@@ -83,6 +93,8 @@ export const Analysis3DViewer = ({ tilesetUrl, inspectionId, initialDetections, 
                                 }}
                                 onCancel={handleFormCancel}
                                 onFormSuccess={handleFormSuccess}
+                                canDelete={canDeleteDefect}
+                                canEdit= {canEditDefect}
                             />
                         </div>
                     </div>
@@ -97,6 +109,8 @@ export const Analysis3DViewer = ({ tilesetUrl, inspectionId, initialDetections, 
                                 inspectionId={inspectionId}
                                 onCancel={handleFormCancel}
                                 onFormSuccess={handleFormSuccess}
+                                canDelete={canDeleteDefect}
+                                canEdit= {canEditDefect}
                             />
                         </div>
                     </div>

@@ -2,10 +2,17 @@ import { getAuth } from '@/features/auth/queries/get-auth';
 import { IsOwner } from '@/features/auth/utils/is-owner';
 import {prisma} from '@/lib/prisma'
 import { getProjectPermissions } from '../permissions/get-project-permissions';
+import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-rerdirect';
+import { toActionState } from '@/components/forms/utils/to-action-state';
+import { ca } from 'date-fns/locale';
 
 export const getProject = async(projectId:string ) => {
     
-    const {user} = await getAuth();
+    const {user, activeOrganization} = await getAuthOrRedirect();
+
+    if (!user || !activeOrganization) {
+        return toActionState('Error', 'Not Authenticated');
+    };      
 
     const project= await prisma.project.findUnique({
         where: {
@@ -30,5 +37,6 @@ export const getProject = async(projectId:string ) => {
 
     return {...project, isOwner: IsOwner(user, project), permissions:{
         canDeleteProject: IsOwner(user, project) && !!permissions.canDeleteProject,
+        canEditProject: IsOwner(user, project) && !!permissions.canEditProject
     }};
 };

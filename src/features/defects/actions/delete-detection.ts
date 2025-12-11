@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { ticketsPath } from "@/path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getTicketPermissions } from "../permissions/get-ticket-permissions";
+import { getDefectPermissions } from "../permissions/get-defect-permissions";
 
 const deleteDefect = async (defectId: string)  => {
     
@@ -17,6 +17,15 @@ const deleteDefect = async (defectId: string)  => {
     try {
         if (!user || !activeOrganization) {
             return toActionState('Error', 'Not Authenticated');
+        }
+
+        const permissions = await getDefectPermissions({
+            userId: user.id,
+            organizationId: activeOrganization.id
+        });
+
+        if (!permissions.canDeleteDefect) {
+            return toActionState('Error', 'You do not have permission to delete defects.');
         }
         
         //Find the defect and verify it belongs to the user's org.

@@ -16,6 +16,7 @@ import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-rerdirect
 import { IsOwner } from '@/features/auth/utils/is-owner';
 import { filesSchema } from "@/features/supplements/schema/files";
 import { findIdsFromText } from '@/utils/find-ids-from-text';
+import { getInspectionPermissions } from "../permissions/get-inspection-permissions";
 
 const JobTypeEnum = z.enum(AnalysisType);
 
@@ -34,18 +35,24 @@ const UpsertInspectionSchema= z.object({
 const UpsertInspection = async (projectId: string ,inspectionId: string,filesKeys: string[] ,
     _actionStat:ActionState ,
     formData: FormData) =>{
-    const {user}= await getAuthOrRedirect()
 
     let inspection;
-    
-    //console.log('inspection created',formData)
-    // console.log('projetc Id',projectId)
-    // console.log('Inspection Id',inspectionId)
-    try{
-        if(!user){
-            return toActionState('Error', 'Not Authenticated')
-        }
 
+    try{
+        const {user, activeOrganization}=await getAuthOrRedirect();
+        
+        if (!user || !activeOrganization) {
+            return toActionState('Error', 'Not Authenticated');
+            }
+        
+        const permissions = await getInspectionPermissions({
+                    userId: user.id,
+                    organizationId: activeOrganization.id
+            });
+        
+        if (!permissions.canEditInspection) {
+            return toActionState('Error', 'You do not have permission to edit  or create ins.');
+            }
         const data_parsed= UpsertInspectionSchema.parse({
             title: formData.get('title') ,
             //content: formData.get('content') ,

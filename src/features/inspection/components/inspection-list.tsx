@@ -17,14 +17,13 @@ export const revalidate = 0;
 type InspectionListPageProp = {
     userId : string;
     projectId: string;
+    canDelete: boolean;
 };
 
 
-export const InspectionList = async ({userId ,projectId}:InspectionListPageProp) => {
+export const InspectionList = async ({userId ,projectId, canDelete}:InspectionListPageProp) => {
     //const router = useRouter();
     const inspections =  await getInspections(projectId);
-
-
     
     return ( 
         <Table>
@@ -41,7 +40,7 @@ export const InspectionList = async ({userId ,projectId}:InspectionListPageProp)
 
             <TableBody>
                 {inspections.map((inspection)=>
-                    <InspectionItem inspection={inspection}  key={inspection.id}/>
+                    <InspectionItem inspection={inspection}  key={inspection.id} canDelete={canDelete}/>
                 
                 )}
             </TableBody>

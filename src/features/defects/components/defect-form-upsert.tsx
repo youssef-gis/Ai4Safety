@@ -41,9 +41,12 @@ type DetectionUpdateFormProps = {
             };
     onCancel: () => void;
     onFormSuccess: () => void;
+    canDelete: boolean;
+    canEdit: boolean;
 }
 
-const DetectionUpsertForm = ({detection, inspectionId, geometry, onCancel, onFormSuccess} : DetectionUpdateFormProps) => {
+const DetectionUpsertForm = ({detection, inspectionId, geometry, 
+            onCancel, onFormSuccess, canDelete, canEdit} : DetectionUpdateFormProps) => {
     const [actionState, action]= useActionState(
         UpsertDetection.bind(null, detection?.id, inspectionId), EMPTY_ACTION_STATE)
 
@@ -161,7 +164,7 @@ const DetectionUpsertForm = ({detection, inspectionId, geometry, onCancel, onFor
                     "flex w-full gap-2 pt-2",
                     detection ? "justify-between" : "justify-center"
                 )}>
-                {detection && (
+                {detection && canDelete && (
                     <Button 
                         type="button"
                         variant="destructive" 
@@ -173,7 +176,12 @@ const DetectionUpsertForm = ({detection, inspectionId, geometry, onCancel, onFor
                     </Button>
                 )}
        
-                <SubmitButton label= {detection ? 'Save Changes': 'Create Defect'}  disabled={false}/>
+               {(!detection || canEdit) && (
+                        <SubmitButton 
+                            label={detection ? 'Save Changes' : 'Create Defect'} 
+                            disabled={false}   
+                        />
+                        )}
             </div>
         </Form>
     </div>

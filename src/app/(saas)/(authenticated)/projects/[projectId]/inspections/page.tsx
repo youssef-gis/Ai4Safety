@@ -11,6 +11,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { InspectionList } from "@/features/inspection/components/inspection-list";
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
+import { toActionState } from "@/components/forms/utils/to-action-state";
+import { getInspectionPermissions } from "@/features/inspection/permissions/get-inspection-permissions";
 
 type InspectionsPageProps = {
     params: Promise<{projectId: string}>;
@@ -18,7 +20,18 @@ type InspectionsPageProps = {
 const Inspectionspage = async({params}:InspectionsPageProps) => {
     const {projectId}= await params;
     const {user, activeOrganization}= await getAuthOrRedirect();
-    const isAdmin = activeOrganization?.membershipByUser.membershipRole ===  'ADMIN';
+        
+    if (!user || !activeOrganization) {
+            return toActionState('Error', 'Not Authenticated');
+    }
+        
+    const permissions = await getInspectionPermissions({
+                    userId: user.id,
+                    organizationId: activeOrganization.id
+ });
+        
+
+    //const isAdmin = activeOrganization?.membershipByUser.membershipRole ===  'ADMIN';
     const project = await getProject(projectId);
     if(!project) return null
     return ( 
@@ -28,17 +41,17 @@ const Inspectionspage = async({params}:InspectionsPageProps) => {
                 description="Manage the inspections related to your project"
                 tabs={< ProjectBreadCrumbs projectName={project.name} />}
                 actions= {
-                    isAdmin && <Button asChild>
+                    permissions.canEditInspection && (<Button asChild>
                         <Link href={inspectionsCreatePath(projectId)} >
                             <LucidePlus className="w-4 h-4" />
                             Start Inspection
                         </Link>
-                    </Button>
+                    </Button>)
                 }
             />
 
             <Suspense fallback={<Spinner/>} >
-                <InspectionList userId = {user.id} projectId={projectId} />
+                <InspectionList userId = {user.id} projectId={projectId} canDelete= {permissions.canDeleteInspection} />
             </Suspense>
         </div>
      );

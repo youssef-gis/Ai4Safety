@@ -6,6 +6,9 @@ import { Suspense } from "react";
 import { Spinner } from "@/components/spinner";
 import { InspectionActions } from "@/features/inspection/components/inspection-actions";
 import { InspectionContextBar, InspectionContextType } from "@/features/inspection/components/inspection-context-bar";
+import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
+import { getDefectPermissions } from "@/features/defects/permissions/get-defect-permissions";
+import { MapLayer } from "@/components/3D_Viewer/types/map";
 
 type PageProps = {
   params: Promise<{ projectId: string; inspectionId: string }>;
@@ -25,13 +28,63 @@ const MOCK_CONTEXT: InspectionContextType = {
 export default async function AnalysisPage({ params }: PageProps) {
   const { projectId, inspectionId } = await params;
   
+  const { user, activeOrganization } = await getAuthOrRedirect();
+
+  const permissions = await getDefectPermissions({
+    userId: user.id,
+    organizationId: activeOrganization?.id
+  });
+
   // Fetch Analysis (Tileset + Detections)
   const analysis = await getAnalysis(inspectionId);
   console.log('Inspection ID:', inspectionId);
   console.log('Project ID:', projectId);
   console.log('Analysis Data:', analysis);
 
-  const tilesetUrl = "/model/tileset.json"; // Or from analysis object
+
+  //const tilesetUrl = "/model/tileset.json"; // Or from analysis object
+  //const tilesetUrl = `/api/tiles/${activeOrganization?.id}/${projectId}/${inspectionId}/tileset.json`;
+  // Base URL 
+  const apiBaseUrl = `/api/tiles/${activeOrganization?.id}/${projectId}/${inspectionId}`;
+  // 1. URL for the 3D Model
+  // The API sees .json and maps it to "3d_tiles/model/"
+  const tilesetUrl = `${apiBaseUrl}/tileset.json`;
+
+  // 2. URL for the Camera Positions
+  // The API sees .geojson and maps it to "odm_report/"
+  const camerasUrl = `${apiBaseUrl}/shots.geojson`;
+
+  // 3. Base URL for Images (to be passed to children)
+  // When you append "/image.jpg", the API maps it to "uploaded_images/"
+  const proxyBaseUrl = apiBaseUrl;
+  //  CONSTRUCT THE LAYERS
+  const layers: MapLayer[] = [
+    // {
+    //   id: 'mesh',
+    //   name: '3D Mesh',
+    //   type: '3D_TILES',
+    //   url: `${apiBase}/3d_tiles/model/tileset.json`, 
+    //   visible: true,
+    //   isBaseLayer: true
+    // },
+    // {
+    //   id: 'ortho',
+    //   name: 'Orthophoto',
+    //   type: 'IMAGERY',
+    //   // Note the {z}/{x}/{y} format for XYZ tiles
+    //   url: `${apiBase}/orthophoto/tiles/{z}/{x}/{y}.png`, 
+    //   visible: true,
+    //   opacity: 0.8
+    // },
+    // Optional: Point Cloud
+    // {
+    //   id: 'cloud',
+    //   name: 'Point Cloud',
+    //   type: 'POINT_CLOUD',
+    //   url: `${apiBase}/3d_tiles/pointcloud/tileset.json`,
+    //   visible: true
+    // }
+  ];
 
   if (!analysis) return <div>Analysis not found</div>;
   const projectName = analysis.inspection.project.name;
@@ -57,7 +110,12 @@ export default async function AnalysisPage({ params }: PageProps) {
               projectId={projectId}
               inspectionId={inspectionId}
               tilesetUrl={tilesetUrl}
+              camerasUrl={camerasUrl} 
+              proxyBaseUrl= {proxyBaseUrl}
+              layers={layers}
               initialDetections={analysis.detections}
+              canDeleteDefect={permissions.canDeleteDefect}
+              canEditDefect= {permissions.canEditDefect}
             />
         </Suspense>
       </div>

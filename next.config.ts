@@ -21,6 +21,23 @@ const nextConfig: NextConfig = {
     },
   },
 
+  images: {
+    remotePatterns: [
+          // local dev
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/**',
+      },
+
+      {
+        protocol: 'https',
+        // Allow all AWS S3 subdomains (e.g., your-bucket.s3.us-east-1.amazonaws.com)
+        hostname: '**.amazonaws.com', 
+      },
+    ],
+  },
   
   webpack: (config: Configuration, { isServer }) => {
       config.resolve = {

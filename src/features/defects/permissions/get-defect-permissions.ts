@@ -1,18 +1,20 @@
 import { getAdminOrRedirect } from "@/features/membership/queries/get-admin-or-redirect";
 import { prisma } from "@/lib/prisma";
+import { MembershipRole } from "@prisma/client";
 
-type TicketPermissionProps = {
+type DefectPermissionProps = {
     organizationId: string | undefined;
     userId: string | undefined;
 }
-export const getTicketPermissions = async({
+export const getDefectPermissions = async({
     organizationId,
     userId,
-}: TicketPermissionProps)  => {
+}: DefectPermissionProps)  => {
     
     if( ! organizationId || !userId ){
         return {
-            canDeleteTicket: false
+            canDeleteDefect: false,
+            canEditDefect: false
         };
     }
 
@@ -28,12 +30,22 @@ export const getTicketPermissions = async({
 
     if(!membership){
         return {
-            canDeleteTicket: false,
+            canDeleteDefect: false,
+            canEditDefect: false
         };
-    }
+    };
+
+    if(membership.membershipRole === MembershipRole.ADMIN){
+        return {
+            canDeleteDefect: true,
+            canEditDefect: true
+        };
+    };
+    
 
     
     return {
-        canDeleteTicket: membership.canDeleteTicket,
+        canDeleteDefect: !!membership.canDeleteDefect,
+        canEditDefect: !!membership.canEditDefect
     };
 }

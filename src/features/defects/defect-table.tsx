@@ -92,7 +92,7 @@ export default  function DefectTable({ data, onViewDefect }: DefectTableProps) {
   //const data = await getData();
   const defects  =  getColumns(onViewDefect);
   if (!defects)return;
-  console.log(defects)
+  //console.log(defects)
 
   return (
    

@@ -5,7 +5,9 @@ import {
     CustomDataSource,
     Entity,
     Viewer,
-    Cesium3DTileset
+    Cesium3DTileset,
+    Scene,
+    Cartesian3
 } from 'cesium';
 import { useRouter } from 'next/navigation';
 
@@ -13,14 +15,19 @@ import { CesiumType } from './types/cesium';
 import { basemapsLayers } from './imagery_basemaps';
 import { autoAlignTileset } from './auto-align-tileset';
 import { Button } from '../ui/button';
-import { Pencil, Square, Trash2, Hand, LucideFullscreen } from 'lucide-react';
+import { Pencil, Square, Trash2, Hand, LucideFullscreen, X } from 'lucide-react';
 import { useDrawingManager } from './hooks/use-drawing-manager';
 import { CesiumComponentProps } from './CesiumWrapper';
 import { LayerControl, SeverityVisibility } from './components/layer-control';
 import { DefectSearch } from './components/defect-search';
-
+import { getOrientationFromRodrigues} from './get-Orientation-From-Rodrigues';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
+import Image from 'next/image';
+import { ImageViewerModal } from '../image-viewer-modal';
+import { getCameraPositionECEF, getRayFromPixel, getRayFromPixelFixed, intersectRayWithTileset, rodriguesToMatrix, snapPointToTileset } from './get-Ray-From-Pixel';
+import { debugCameraProjection } from './debug-projection';
 //import "@cesium/widgets/styles.css";
+
 
 const getSeverityColor = (CesiumJs: CesiumType, severity: string) => {
     switch (severity) {
@@ -41,7 +48,9 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     CesiumJs,
     cesiumContainerRef,
     onFullscreenToggle,
-    isMapFullscreen,  
+    isMapFullscreen,
+    proxyBaseUrl,
+    camerasUrl,  
     tilesetUrl, 
     initialDetections,
     onDefectDetected,
@@ -53,31 +62,39 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     severityVisibility,
     onToggleSeverity,
     onToggleAllDefects,
+    layers
 }) => {
-    const router = useRouter();
     
     // Fix global variable assignment
-    if (typeof window !== 'undefined') {
+    // if (typeof window !== 'undefined') {
+    //     (window as any).CESIUM_BASE_URL = '/cesium';
+    // };
+
+    useEffect(() => {
         (window as any).CESIUM_BASE_URL = '/cesium';
-    }
+    }, [])
 
     const cesiumViewer = useRef<Viewer | null>(null);
     const defectsDataSourceRef = useRef<CustomDataSource | null>(null);
-    
+    const camerasDataSourceRef = useRef<CustomDataSource | null>(null);
     
     const addedScenePrimitives = useRef<Cesium3DTileset[]>([]);
     const currentTilesetRef = useRef<Cesium3DTileset | null>(null);
     const isLoaded = useRef(false);
     const [viewerReady, setViewerReady] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const selectedCameraEntity = useRef<Entity | null>(null);
+    const localToWorldTransformRef = useRef<any>(null);
 
-    
+
     const { 
         drawingMode, 
-        startDrawing, 
+        startDrawing,
+        stopDrawing, 
         clearActiveDrawing 
     } = useDrawingManager({
         CesiumJs,
-        viewer: cesiumViewer.current,
+        viewerRef: cesiumViewer,
         onShapeCreated: (candidate, entities) => {
             if (onDefectDetected) {
                 onDefectDetected(candidate, entities);
@@ -85,7 +102,143 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
         }
     });
 
-    // 2. Click Handler for Selection
+    const parseCameraModel = (cameraString: string) => {
+        // Example: "v2 dji fc330 4000 3000 brown 0.5555"
+        const parts = cameraString.split(' ');
+        
+        return {
+            version: parts[0],
+            make: parts[1],
+            model: parts[2],
+            width: parseInt(parts[3]) || 4000,
+            height: parseInt(parts[4]) || 3000,
+            distortionModel: parts[5] || 'brown',
+            // The last number is often the focal ratio or first distortion param
+            k1: parseFloat(parts[6]) || 0,
+            k2: 0, // Would need to get from cameras.json if available
+        };
+    };
+
+    // ---------------------------------------------------------------------------
+    //   LOAD CAMERAS (Icons + Drop Lines)
+    // ---------------------------------------------------------------------------
+    useEffect(() => {
+        if (!camerasUrl || !viewerReady || !cesiumViewer.current) return;
+
+        const loadCameras = async () => {
+            try {
+                const response = await fetch(camerasUrl);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                if (!camerasDataSourceRef.current) {
+                    const ds = new CesiumJs.CustomDataSource("drone-cameras");
+                    cesiumViewer.current!.dataSources.add(ds);
+                    camerasDataSourceRef.current = ds;
+                }
+
+                const dataSource = camerasDataSourceRef.current;
+                dataSource.entities.removeAll();
+
+                // Compute the local-to-ECEF transform using the first camera as reference
+                // This should ideally come from WebODM's georeferencing info
+                if (data.features.length > 0) {
+                    const firstFeature = data.features[0];
+                    const [refLon, refLat, refAlt] = firstFeature.geometry.coordinates;
+                    
+                    // Create ENU frame at reference point
+                    const refCartesian = CesiumJs.Cartesian3.fromDegrees(refLon, refLat, 0);
+                    localToWorldTransformRef.current = CesiumJs.Transforms.eastNorthUpToFixedFrame(refCartesian);
+                }
+
+
+                // Load a camera icon (You can use a local asset or a base64 string)
+                // Using a standard map pin style for now, or ensure you have /camera-icon.png in public folder
+                const cameraIconUrl = "https://cdn-icons-png.flaticon.com/512/3687/3687416.png"; 
+
+                data.features.forEach((feature: any) => {
+                    const [lon, lat, alt] = feature.geometry.coordinates;
+                    const props = feature.properties;
+                    const filename = feature.properties.filename;
+                    
+                    const position = CesiumJs.Cartesian3.fromDegrees(lon, lat, alt);
+                    const groundPosition = CesiumJs.Cartesian3.fromDegrees(lon, lat, 0); // Ground level anchor
+
+                    const cameraModel = parseCameraModel(props.camera);
+
+                    // Store complete camera data for projection
+                    const cameraData = {
+                        filename: props.filename,
+                        focal: props.focal,
+                        width: props.width || cameraModel.width,
+                        height: props.height || cameraModel.height,
+                        k1: cameraModel.k1 || 0,
+                        k2: cameraModel.k2 || 0,
+                        translation: props.translation,
+                        rotation: props.rotation,
+                        gpsPosition: { lon, lat, alt }
+                    };
+
+                    //const rotationVector = feature.properties.rotation; 
+                  
+                    const orientation = getOrientationFromRodrigues(CesiumJs, props.rotation);
+
+                    dataSource.entities.add({
+                        position: position,
+                        orientation: orientation,
+                        
+                        // 1. The Camera Icon (Billboard)
+                        billboard: {
+                            image: cameraIconUrl,
+                            scale: 0.06, 
+                            color: CesiumJs.Color.WHITE, 
+                            verticalOrigin: CesiumJs.VerticalOrigin.BOTTOM,
+                            disableDepthTestDistance: Number.POSITIVE_INFINITY, 
+                            heightReference: CesiumJs.HeightReference.NONE,
+                            alignedAxis: CesiumJs.Cartesian3.UNIT_Z, 
+                            rotation: 0,
+                        },
+
+                        // 2. The "Drop Line" (Anchor to ground) - Helps depth perception
+                        polyline: {
+                            positions: [position, groundPosition],
+                            width: 1,
+                            material: new CesiumJs.ColorMaterialProperty(
+                                CesiumJs.Color.WHITE.withAlpha(0.4)
+                            ),
+                            distanceDisplayCondition: new CesiumJs.DistanceDisplayCondition(0.0, 200.0)
+                        },
+
+                        // Metadata
+                        properties: {
+                            type: 'camera-point',
+                            filename: filename,
+                            cameraData: cameraData,
+                            rawData: feature.properties,
+                            exactPosition: { lon, lat, alt }
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error loading cameras:", error);
+            }
+        };
+
+        loadCameras();
+
+        return () => {
+            if (cesiumViewer.current && camerasDataSourceRef.current) {
+                cesiumViewer.current.dataSources.remove(camerasDataSourceRef.current);
+                camerasDataSourceRef.current = null;
+            }
+        };
+    }, [camerasUrl, viewerReady, CesiumJs]);
+
+
+    // ---------------------------------------------------------------------------
+    //  CLICK HANDLER (Updated for Cameras)
+    // ---------------------------------------------------------------------------
     useEffect(() => {
         if (!cesiumViewer.current) return;
         
@@ -98,23 +251,267 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
             
             if (CesiumJs.defined(pickedObject) && pickedObject.id instanceof CesiumJs.Entity) {
                 const entity = pickedObject.id;
-                // Check if the entity has the custom detectionData property
+
+                // CASE A: Defect Selected
                 if (entity.properties && entity.properties.hasProperty('detectionData')) {
-                    
                     const currentTime = cesiumViewer.current!.clock.currentTime;
                     const defectData = entity.properties.getValue(currentTime)['detectionData'];
-                    
                     if (onDefectSelected && defectData) {
                         onDefectSelected(defectData);
                     }
                 }
+                
+                // CASE B: Camera Selected (NEW)
+                else if (entity.properties && entity.properties.hasProperty('type') && entity.properties.getValue(CesiumJs.JulianDate.now()).type === 'camera-point') {
+                    
+                    // --- A. RESET PREVIOUS ---
+                    if (selectedCameraEntity.current) {
+                        // Reset previous icon to White and normal size
+                        selectedCameraEntity.current.billboard!.color = new CesiumJs.ConstantProperty(CesiumJs.Color.WHITE);
+                        selectedCameraEntity.current.billboard!.scale = new CesiumJs.ConstantProperty(0.06);
+                    }
+
+                    //
+                    // Make it Green (Lime) and 50% larger
+                    entity.billboard!.color = new CesiumJs.ConstantProperty(CesiumJs.Color.LIME);
+                    entity.billboard!.scale = new CesiumJs.ConstantProperty(0.1);
+                    selectedCameraEntity.current = entity;
+
+                    // --- C. LOAD IMAGE ---
+                    const filename = entity.properties.getValue(CesiumJs.JulianDate.now()).filename;
+                    const pos = entity.properties.getValue(CesiumJs.JulianDate.now()).exactPosition;
+
+                    if (proxyBaseUrl && filename) {
+                        setSelectedImage(`${proxyBaseUrl}/${filename}`);
+                    }
+
+                    // --- D. FLY TO ---
+                    cesiumViewer.current!.camera.flyTo({
+                        destination: CesiumJs.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt),
+                        orientation: {
+                            heading: cesiumViewer.current!.camera.heading,
+                            pitch: CesiumJs.Math.toRadians(-15),
+                            roll: 0
+                        },
+                        duration: 1.5
+                    });
+                }
             }
+
         }, CesiumJs.ScreenSpaceEventType.LEFT_CLICK);
 
         return () => handler.destroy();
-    }, [CesiumJs, drawingMode, onDefectSelected]);
+    }, [CesiumJs, onDefectSelected, drawingMode, viewerReady, proxyBaseUrl]);
 
+    // Reset highlight when image is closed
+    useEffect(() => {
+        if (!selectedImage && selectedCameraEntity.current) {
+            selectedCameraEntity.current.billboard!.color = new CesiumJs.ConstantProperty(CesiumJs.Color.WHITE);
+            selectedCameraEntity.current.billboard!.scale = new CesiumJs.ConstantProperty(0.06);
+            selectedCameraEntity.current = null;
+        }
+    }, [selectedImage, CesiumJs]);
 
+    const handleCrackProjection = async (points2D: { x: number; y: number }[]) => {
+        console.log("╔═══════════════════════════════════════════════════════════╗");
+        console.log("║  PROJECTION START                                         ║");
+        console.log("╚═══════════════════════════════════════════════════════════╝");
+        console.log(`📥 Received ${points2D?.length || 0} points`);
+
+        if (!cesiumViewer.current || !selectedCameraEntity.current || !points2D.length) {
+            console.error("❌ Missing required data");
+            return;
+        }
+
+        const entity = selectedCameraEntity.current;
+        const props = entity.properties!.getValue(CesiumJs.JulianDate.now());
+        const cameraData = props.cameraData;
+        const scene = cesiumViewer.current.scene;
+        const tileset = currentTilesetRef.current;
+
+        console.log("📷 Camera:", cameraData.filename);
+
+        // Camera position
+        const cameraPosECEF = CesiumJs.Cartesian3.fromDegrees(
+            cameraData.gpsPosition.lon,
+            cameraData.gpsPosition.lat,
+            cameraData.gpsPosition.alt
+        );
+
+        // Tileset info
+        let distanceToTileset = 50;
+        let tilesetCenterHeight = 0;
+        if (tileset?.boundingSphere) {
+            const tilesetCenter = tileset.boundingSphere.center;
+            const tilesetCarto = CesiumJs.Cartographic.fromCartesian(tilesetCenter);
+            tilesetCenterHeight = tilesetCarto.height;
+            distanceToTileset = CesiumJs.Cartesian3.distance(cameraPosECEF, tilesetCenter);
+            
+            console.log(`📏 Distance to tileset: ${distanceToTileset.toFixed(2)}m`);
+            console.log(`📏 Tileset center height: ${tilesetCenterHeight.toFixed(2)}m`);
+            console.log(`📏 Tileset radius: ${tileset.boundingSphere.radius.toFixed(2)}m`);
+        }
+
+        const cameraCarto = CesiumJs.Cartographic.fromCartesian(cameraPosECEF);
+        console.log(`📷 Camera height: ${cameraCarto.height.toFixed(2)}m`);
+
+        // ENU frame
+        const enuTransform = CesiumJs.Transforms.eastNorthUpToFixedFrame(cameraPosECEF);
+        const enuRot = CesiumJs.Matrix4.getMatrix3(enuTransform, new CesiumJs.Matrix3());
+
+        // Wait for tiles
+        if (tileset && !tileset.tilesLoaded) {
+            console.log("⏳ Waiting for tiles...");
+            await new Promise<void>(resolve => {
+                const check = () => tileset.tilesLoaded ? resolve() : setTimeout(check, 100);
+                check();
+            });
+        }
+        scene.render();
+
+        // Camera intrinsics
+        const cx = cameraData.width / 2;
+        const cy = cameraData.height / 2;
+        const f = cameraData.focal * Math.max(cameraData.width, cameraData.height);
+
+        // Rotation
+        const R = rodriguesToMatrix(CesiumJs, cameraData.rotation);
+        const Rt = CesiumJs.Matrix3.transpose(R, new CesiumJs.Matrix3());
+
+        const worldPositions: any[] = [];
+        const hitTypes: string[] = [];
+        let tilesetHits = 0;
+
+        for (let i = 0; i < points2D.length; i++) {
+            const pixel = points2D[i];
+
+            // Normalized coordinates
+            let xn = (pixel.x - cx) / f;
+            let yn = (pixel.y - cy) / f;
+
+            // Undistort
+            const k1 = cameraData.k1 || 0;
+            if (Math.abs(k1) > 1e-8) {
+                const xd = xn, yd = yn;
+                for (let iter = 0; iter < 15; iter++) {
+                    const r2 = xn * xn + yn * yn;
+                    xn = xd / (1 + k1 * r2);
+                    yn = yd / (1 + k1 * r2);
+                }
+            }
+
+            // Direction
+            const dirCam = new CesiumJs.Cartesian3(xn, yn, 1.0);
+            CesiumJs.Cartesian3.normalize(dirCam, dirCam);
+            const dirLocal = CesiumJs.Matrix3.multiplyByVector(Rt, dirCam, new CesiumJs.Cartesian3());
+            const dirECEF = CesiumJs.Matrix3.multiplyByVector(enuRot, dirLocal, new CesiumJs.Cartesian3());
+            CesiumJs.Cartesian3.normalize(dirECEF, dirECEF);
+
+            const ray = new CesiumJs.Ray(cameraPosECEF, dirECEF);
+            const intersection = await intersectRayWithTileset(
+                CesiumJs, scene, ray, tileset, distanceToTileset * 3
+            );
+
+            let finalPosition: any;
+            let hitType: string;
+
+            if (intersection) {
+                finalPosition = intersection.position;
+                hitType = intersection.hitType;
+                
+                // Verify the hit is actually away from camera
+                const dist = CesiumJs.Cartesian3.distance(cameraPosECEF, finalPosition);
+                if (dist < 1) {
+                    // Bad hit - use fallback
+                    console.warn(`Point ${i}: Hit too close (${dist.toFixed(2)}m), using fallback`);
+                    finalPosition = CesiumJs.Ray.getPoint(ray, distanceToTileset);
+                    hitType = 'corrected-fallback';
+                }
+                
+                if (hitType.includes('tileset')) {
+                    tilesetHits++;
+                }
+            } else {
+                finalPosition = CesiumJs.Ray.getPoint(ray, distanceToTileset);
+                hitType = 'fallback';
+            }
+
+            // Log with verification
+            const hitCarto = CesiumJs.Cartographic.fromCartesian(finalPosition);
+            const distFromCamera = CesiumJs.Cartesian3.distance(cameraPosECEF, finalPosition);
+
+            console.log(`Point ${i}: (${pixel.x.toFixed(0)}, ${pixel.y.toFixed(0)}) → ${hitType}`);
+            console.log(`  ↳ Height: ${hitCarto.height.toFixed(2)}m, Dist: ${distFromCamera.toFixed(2)}m`);
+
+            hitTypes.push(hitType);
+            worldPositions.push(finalPosition);
+        }
+
+        console.log(`📊 Tileset hits: ${tilesetHits}/${points2D.length}`);
+        console.log(`📊 Hit types: ${[...new Set(hitTypes)].join(', ')}`);
+
+        if (worldPositions.length < 2) {
+            console.error("❌ Insufficient points");
+            return;
+        }
+
+        // Create visualization
+        const id = `projection_${Date.now()}`;
+
+        // POLYLINE
+        defectsDataSourceRef.current!.entities.add({
+            id: id,
+            polyline: {
+                positions: worldPositions,
+                width: 10,
+                material: new CesiumJs.PolylineGlowMaterialProperty({
+                    glowPower: 0.4,
+                    color: tilesetHits > 0 ? CesiumJs.Color.LIME : CesiumJs.Color.YELLOW
+                }),
+                depthFailMaterial: new CesiumJs.PolylineGlowMaterialProperty({
+                    glowPower: 0.3,
+                    color: CesiumJs.Color.ORANGE.withAlpha(0.7)
+                }),
+                clampToGround: false,
+                arcType: CesiumJs.ArcType.NONE
+            }
+        });
+
+        // POINT MARKERS - with visibility
+        worldPositions.forEach((pos, idx) => {
+            const ht = hitTypes[idx];
+            let color = CesiumJs.Color.ORANGE;
+            if (ht.includes('tileset')) color = CesiumJs.Color.LIME;
+            else if (ht.includes('globe')) color = CesiumJs.Color.CYAN;
+            else if (ht === 'boundingSphere') color = CesiumJs.Color.YELLOW;
+
+            defectsDataSourceRef.current!.entities.add({
+                id: `${id}_pt_${idx}`,
+                position: pos,
+                point: {
+                    pixelSize: 14,
+                    color: color,
+                    outlineColor: CesiumJs.Color.BLACK,
+                    outlineWidth: 3,
+                    // Use a moderate value - visible but with depth awareness
+                    disableDepthTestDistance: 5000,
+                    heightReference: CesiumJs.HeightReference.NONE
+                }
+            });
+        });
+
+        console.log(`✅ Created: ${id}`);
+        
+        // Fly to see the result
+        cesiumViewer.current.flyTo(defectsDataSourceRef.current!.entities.getById(id)!, {
+            duration: 1.0,
+            offset: new CesiumJs.HeadingPitchRange(0, CesiumJs.Math.toRadians(-30), distanceToTileset)
+        });
+
+        scene.requestRender();
+    };
+
+    
     // Effect to Fly To Defect when focusedDefectId changes
     useEffect(() => {
         if (!cesiumViewer.current || !focusedDefectId || !defectsDataSourceRef.current) return;
@@ -390,11 +787,27 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
 
     return (
         <div className="relative w-full h-full">
-            <div ref={cesiumContainerRef} className="w-full h-full" />
+            <div ref={cesiumContainerRef} className="w-full h-full" suppressHydrationWarning={true}/>
+
+            {/* --- NEW: IMAGE OVERLAY MODAL --- */}
+            {selectedImage && selectedCameraEntity.current && (
+                <ImageViewerModal 
+                    src={selectedImage} 
+                    onClose={() => setSelectedImage(null)} 
+                    onSaveDrawing={handleCrackProjection}
+                    expectedWidth={
+                        selectedCameraEntity.current.properties?.getValue(CesiumJs.JulianDate.now())?.cameraData?.width
+                    }
+                    expectedHeight={
+                        selectedCameraEntity.current.properties?.getValue(CesiumJs.JulianDate.now())?.cameraData?.height
+                    }
+                />
+            
+            )}
 
             {/* Toolbar with Dark Mode fix */}
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 p-2 bg-card border border-border rounded-lg shadow-md w-12 items-center">
-                
+
                 {/* Layer Control */}
                 <LayerControl 
                     showTileset={showTileset}
@@ -437,6 +850,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 >
                     <Trash2 className="w-4 h-4" />
                 </Button>
+
             </div>
 
             {/* --- TOP RIGHT CONTROLS CONTAINER --- */}

@@ -5,6 +5,8 @@ import { getMemberships } from "../queries/get-memberships";
 import { MembershipDeleteButton } from "./membership-delete-button";
 import { MembershipMoreMenu } from "./membership-more-menu";
 import {PermissionToggle} from './permission-toggle';
+import { Badge } from "@/components/ui/badge";
+import { PermissionManager } from "./permission-manager";
 
 type MembershipListPageProp = {
     organizationId: string;
@@ -21,13 +23,13 @@ export const MembershipList = async({organizationId}:MembershipListPageProp) => 
                     <TableHead>Joined At</TableHead>
                     <TableHead>Verifed Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Can Delete</TableHead>
+                    <TableHead >Permissions</TableHead>
                 </TableRow>
             </TableHeader>
 
             <TableBody>
                 {memberships.map((membership)=>{
-
+                    const isAdmin = membership.membershipRole === 'ADMIN';
                     const membershipMoreMenu= (
                         <MembershipMoreMenu
                             organizationId= {membership.organizationId}
@@ -41,7 +43,8 @@ export const MembershipList = async({organizationId}:MembershipListPageProp) => 
                             userId= {membership.userId}
                         />
                     )
-                    const buttons= <>{membershipMoreMenu}
+                    // {membershipMoreMenu}
+                    const buttons= <>
                                     {deleteButton}</>;
                     return(
                         <TableRow key={membership.userId} >
@@ -57,14 +60,28 @@ export const MembershipList = async({organizationId}:MembershipListPageProp) => 
                                     <LucideBan className="h-4 w-4" />
                                 )}
                             </TableCell>
-                            <TableCell>{membership.membershipRole}</TableCell>
+                            <TableCell>                                
+                                <Badge variant={isAdmin ? "default" : "secondary"}>
+                                    {membership.membershipRole}
+                                </Badge>
+                            </TableCell>
                             <TableCell>
-                                <PermissionToggle
+                                {/* <PermissionToggle
                                     userId={membership.userId}
                                     organizationId={membership.organizationId}
                                     permissionKey="canDeleteProject"
                                     permissionValue= {membership.canDeleteProject}
-                                />
+                                /> */}
+                                {isAdmin ? (
+                                    <span className="text-xs text-muted-foreground italic">
+                                        Full Access
+                                    </span>
+                                ) : (
+                                    <PermissionManager 
+                                        membership={membership}
+                                        isAdmin={isAdmin}
+                                    />
+                                )}
                             </TableCell>
                             <TableCell className="flex justify-end gap-x-2">
                                 {buttons}

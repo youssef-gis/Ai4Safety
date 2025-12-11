@@ -1,7 +1,7 @@
 import { getAuth } from '@/features/auth/queries/get-auth';
 import { IsOwner } from '@/features/auth/utils/is-owner';
 import {prisma} from '@/lib/prisma'
-import { getTicketPermissions } from '../permissions/get-ticket-permissions';
+import { getTicketPermissions } from '../permissions/get-defect-permissions';
 
 export const getTicket = async(ticketId:string ) => {
     

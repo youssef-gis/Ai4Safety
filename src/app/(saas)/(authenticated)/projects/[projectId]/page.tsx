@@ -81,6 +81,8 @@ import Heading from "@/components/heading";
 import { ProjectBreadCrumbs } from "./_navigation/tabs";
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { getProject } from "@/features/project/queries/get-project";
+import { getInspectionPermissions } from "@/features/inspection/permissions/get-inspection-permissions";
+import { toActionState } from "@/components/forms/utils/to-action-state";
 
 // --- MOCK DATA GENERATOR (For UI Dev) ---
 const MOCK_STATS: ProjectStatsType = {
@@ -103,10 +105,21 @@ const MOCK_CHART_DATA: ChartDataPoint[] = [
 
 export default  async  function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
     const { projectId } = await params;
-    await getAuthOrRedirect();
+    
+    const {user, activeOrganization}= await getAuthOrRedirect();
+            
+    if (!user || !activeOrganization) {
+        return toActionState('Error', 'Not Authenticated');
+    }
+            
+    const permissions = await getInspectionPermissions({
+        userId: user.id,
+        organizationId: activeOrganization.id
+     });
+
     const project= await getProject(projectId);
     if(!project) return null
-    // TODO: When DB is populated, uncomment this and remove MOCK_DATA
+    // When DB is populated, uncomment this and remove MOCK_DATA
     // const { chartData, kpi } = await getProjectAnalytics(projectId);
     
     // For now, use mocks to verify UI
@@ -123,10 +136,10 @@ export default  async  function ProjectPage({ params }: { params: Promise<{ proj
                 tabs={<ProjectBreadCrumbs  projectName={project.name || "Project"}/>} 
                 actions={
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        {/* <Button variant="outline" size="sm">
                             <LucideCalendarDays className="mr-2 h-4 w-4" />
                             Schedule
-                        </Button>
+                        </Button> */}
                         <Button variant="outline" size="sm">
                             <LucideDownload className="mr-2 h-4 w-4" />
                             Export Report
@@ -181,7 +194,7 @@ export default  async  function ProjectPage({ params }: { params: Promise<{ proj
                 </div>
                 <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                     <Suspense fallback={<div className="p-8"><Spinner /></div>}>
-                        <InspectionList userId="" projectId={projectId} />
+                        <InspectionList userId="" projectId={projectId} canDelete={permissions.canDeleteInspection} />
                     </Suspense>
                 </div>
             </div>

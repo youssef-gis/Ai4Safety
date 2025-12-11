@@ -4,8 +4,14 @@ import { getAdminOrRedirect } from "../queries/get-admin-or-redirect";
 import { toActionState } from "@/components/forms/utils/to-action-state";
 import { revalidatePath } from "next/cache";
 import { membershipsPath } from "@/path";
+import { Membership } from "@prisma/client";
 
-type PermissionKey='canDeleteProject';
+type PermissionKey = keyof Pick<Membership, 
+  'canDeleteInspection' | 
+  'canEditInspection' |
+  'canDeleteDefect' |
+  'canEditDefect'
+>;
 
 export const togglePermission = async ({userId,
             organizationId,
@@ -15,6 +21,18 @@ export const togglePermission = async ({userId,
                 permissionKey: PermissionKey
             }) => {
     await getAdminOrRedirect(organizationId);
+
+    // 2. Validate Key (Security precaution)
+    const allowedKeys: PermissionKey[] = [
+        'canDeleteInspection', 'canEditInspection',
+        'canDeleteDefect' , 'canEditDefect'
+    ];
+
+    if (!allowedKeys.includes(permissionKey as PermissionKey)) {
+        return toActionState('Error', "Invalid permission key");
+    }
+
+    const key = permissionKey as PermissionKey;
 
     const where = {
         MembershipId:{

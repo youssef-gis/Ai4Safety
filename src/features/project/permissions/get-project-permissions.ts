@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { MembershipRole } from "@prisma/client";
 
 type ProjectPermissionProps = {
     userId: string | undefined;
@@ -10,7 +11,8 @@ export const getProjectPermissions = async({
 }: ProjectPermissionProps)  => {
     if(!userId || ! organizationId){
         return {
-            canDeleteProject: false
+            canDeleteProject: false,
+            canEditProject: false
         };
     }
 
@@ -26,10 +28,19 @@ export const getProjectPermissions = async({
     if(!membership){
         return {
             canDeleteProject: false,
+            canEditProject: false
         };
-    }
+    };
+
+    if(membership.membershipRole === MembershipRole.ADMIN){
+            return {
+                canDeleteProject: true,
+                canEditProject: true
+            };
+        };
 
     return {
         canDeleteProject: membership.canDeleteProject,
+        canEditProject: membership.canEditProject
     };
 }

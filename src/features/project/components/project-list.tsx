@@ -10,9 +10,11 @@ type ProjectListProps = {
     userId ?: string;
     byOrganization?: boolean
     searchParams: ParsedSearchParams;
+    canEdit: boolean;
+    canDelete: boolean;
 };
 
-export const ProjectLisT = async ({userId, byOrganization=false,searchParams}: ProjectListProps) => {
+export const ProjectLisT = async ({userId, byOrganization=false,searchParams, canEdit, canDelete}: ProjectListProps) => {
     const {list: projects, metadata: projectMetadata}= await getProjects(
         userId,
         byOrganization,
@@ -37,7 +39,7 @@ export const ProjectLisT = async ({userId, byOrganization=false,searchParams}: P
             </div>
             { projects.length ?(projects.map(
                         (project) => (
-                            <ProjectItem key={project.id} project={project}  />
+                            <ProjectItem key={project.id} project={project} canEdit={canEdit} canDelete={canDelete} />
                         )
                 )):(<Placeholder label="No Projects Found" />)    
             }

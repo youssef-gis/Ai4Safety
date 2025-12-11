@@ -31,11 +31,12 @@ export interface DefectCandidate {
 
 interface UseDrawingManagerProps {
     CesiumJs: CesiumType;
-    viewer: Viewer | null;
+    //viewer: Viewer | null;
+    viewerRef:  React.RefObject<Viewer | null>; 
     onShapeCreated: (candidate: DefectCandidate, entities: Entity[]) => void;
 }
 
-export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawingManagerProps) => {
+export const useDrawingManager = ({ CesiumJs, viewerRef, onShapeCreated }: UseDrawingManagerProps) => {
     const [drawingMode, setDrawingMode] = useState<DrawingMode>('none');
     
     const activeShapeRef = useRef<Entity | null>(null);
@@ -105,6 +106,7 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
 
     // ROBUST PICKING STRATEGY
     const getPositionFromTileset = useCallback((position: Cartesian2) => {
+        const viewer = viewerRef.current;
         if (!viewer) return null;
         const scene = viewer.scene;
 
@@ -151,22 +153,72 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
       //  }
    }
     return null;
-}, [viewer, CesiumJs]);
+}, [viewerRef, CesiumJs]);
+
+    // const clearActiveDrawing = useCallback(() => {
+    //     const viewer = viewerRef.current;
+    //     if (!viewer) return;
+    //     if (activeShapeRef.current) {
+    //         viewer.entities.remove(activeShapeRef.current);
+    //         activeShapeRef.current = null;
+    //     }
+    //     if (activeLabelRef.current) {
+    //         viewer.entities.remove(activeLabelRef.current);
+    //         activeLabelRef.current = null;
+    //     }
+    //     activePointsRef.current.forEach(p => viewer.entities.remove(p));
+    //     activePointsRef.current = [];
+    //     floatingPointRef.current = null;
+    // }, [viewerRef]);
 
     const clearActiveDrawing = useCallback(() => {
+
+        const viewer = viewerRef.current;
         if (!viewer) return;
+        console.log("viewer.entities.count:", viewer.entities.values.length);
+        
+
+        // 1. Remove active preview shape (dynamic polyline/polygon)
         if (activeShapeRef.current) {
             viewer.entities.remove(activeShapeRef.current);
             activeShapeRef.current = null;
         }
+
+        // 2. Remove dynamic live-updating label
         if (activeLabelRef.current) {
             viewer.entities.remove(activeLabelRef.current);
             activeLabelRef.current = null;
         }
-        activePointsRef.current.forEach(p => viewer.entities.remove(p));
-        activePointsRef.current = [];
+
+        // 3. Remove all small point markers
+        if (activePointsRef.current.length > 0) {
+            activePointsRef.current.forEach(p => viewer.entities.remove(p));
+            activePointsRef.current = [];
+        }
+
+        // 4. Remove ANY leftover static label created by right-click
+        //    (labels created in `startDrawing` → right-click freeze)
+        viewer.entities.values.forEach(entity => {
+            if (entity.properties?.isTempShape?.getValue()) {
+                viewer.entities.remove(entity);
+            }
+        });
+
+
+        // 5. Clear floating point used for dynamic update
         floatingPointRef.current = null;
-    }, [viewer]);
+
+        // 6. Destroy drawing handler (VERY important)
+        if (drawingHandlerRef.current) {
+            drawingHandlerRef.current.destroy();
+            drawingHandlerRef.current = null;
+        }
+
+        // 7. Reset drawing mode
+        setDrawingMode('none');
+
+}, [viewerRef]);
+
 
     const stopDrawing = useCallback(() => {
         if (drawingHandlerRef.current) {
@@ -178,6 +230,7 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
     }, [clearActiveDrawing]);
 
     const createPoint = useCallback((position: Cartesian3) => {
+        const viewer = viewerRef.current;
         if (!viewer) return;
         const point = viewer.entities.add({
             position: position,
@@ -190,9 +243,10 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
             }
         });
         activePointsRef.current.push(point);
-    }, [CesiumJs, viewer]);
+    }, [CesiumJs, viewerRef]);
 
     const startDrawing = useCallback((mode: DrawingMode) => {
+        const viewer = viewerRef.current;
         if (!viewer) return;
         stopDrawing();
         setDrawingMode(mode);
@@ -323,6 +377,11 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
                 (finalShape.polygon as any).perPositionHeight = true;
             }
 
+            (finalShape as any).properties = new CesiumJs.PropertyBag({
+                isTempShape: new CesiumJs.ConstantProperty(true),
+            });
+
+
             // 2. Freeze Label (remove CallbackProperty)
             let labelText = "";
             if (mode === 'polyline') {
@@ -344,7 +403,13 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
                     disableDepthTestDistance: Number.POSITIVE_INFINITY,
                     pixelOffset: new Cartesian2(0, -20)
                 }
+                
             });
+
+            (finalLabel as any).properties = new CesiumJs.PropertyBag({
+                isTempShape: new CesiumJs.ConstantProperty(true),
+            });
+
 
             // Clean up dynamic helpers
             if(activeLabelRef.current) viewer.entities.remove(activeLabelRef.current);
@@ -373,7 +438,7 @@ export const useDrawingManager = ({ CesiumJs, viewer, onShapeCreated }: UseDrawi
 
         }, CesiumJs.ScreenSpaceEventType.RIGHT_CLICK);
 
-    }, [viewer, stopDrawing, CesiumJs.ScreenSpaceEventHandler, CesiumJs.CallbackProperty, CesiumJs.ScreenSpaceEventType.LEFT_CLICK, CesiumJs.ScreenSpaceEventType.MOUSE_MOVE, CesiumJs.ScreenSpaceEventType.RIGHT_CLICK, CesiumJs.PolygonHierarchy, CesiumJs.Color.WHITE, CesiumJs.Color.BLACK, CesiumJs.Color.BLUE, CesiumJs.Color.RED, getPositionFromTileset, createPoint, calculatePolylineDistance, calculatePolygonArea, onShapeCreated]);
+    }, [viewerRef, stopDrawing, CesiumJs.ScreenSpaceEventHandler, CesiumJs.CallbackProperty, CesiumJs.ScreenSpaceEventType.LEFT_CLICK, CesiumJs.ScreenSpaceEventType.MOUSE_MOVE, CesiumJs.ScreenSpaceEventType.RIGHT_CLICK, CesiumJs.PolygonHierarchy, CesiumJs.Color.WHITE, CesiumJs.Color.BLACK, CesiumJs.Color.BLUE, CesiumJs.Color.RED, CesiumJs.ArcType.NONE, CesiumJs.PropertyBag, CesiumJs.ConstantProperty, getPositionFromTileset, createPoint, calculatePolylineDistance, calculatePolygonArea, onShapeCreated]);
 
     return {
         drawingMode,

@@ -13,20 +13,32 @@ import DefectTable from "@/features/defects/defect-table";
 import { Detection } from "@prisma/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InspectionAnalytics } from "@/features/analysis/components/inspection-analytics";
+import { MapLayer } from "@/components/3D_Viewer/types/map";
 
 interface AnalysisLayoutProps {
   projectId: string;
   inspectionId: string;
+  camerasUrl: string;
+  proxyBaseUrl:string;
   tilesetUrl: string;
+  layers: MapLayer[];
   initialDetections: Detection[];
+  canDeleteDefect: boolean;
+  canEditDefect: boolean;
 }
 
 export function AnalysisLayout({
+  camerasUrl,
+  proxyBaseUrl,
   tilesetUrl,
+  layers,
   inspectionId,
-  initialDetections
+  initialDetections,
+  canDeleteDefect,
+  canEditDefect
 }: AnalysisLayoutProps) {
   
+  console.log('Cameras Url ', camerasUrl);
   // Refs to control panel sizes
   const mapPanelRef = useRef<ImperativePanelHandle>(null);
   const tablePanelRef = useRef<ImperativePanelHandle>(null);
@@ -58,9 +70,14 @@ export function AnalysisLayout({
         {/* We pass focusedDefectId down to Cesium wrapper */}
         <Analysis3DViewer 
           tilesetUrl={tilesetUrl}
+          camerasUrl={camerasUrl}
+          proxyBaseUrl={proxyBaseUrl}
+          layers={layers}
           inspectionId={inspectionId}
           initialDetections={initialDetections}
           focusedDefectId={focusedDefectId} 
+          canDeleteDefect={canDeleteDefect}
+          canEditDefect= {canEditDefect}
         />
       </ResizablePanel>
 
@@ -87,8 +104,10 @@ export function AnalysisLayout({
                     <div className="p-4">
                         <DefectTable 
                             data={initialDetections} 
-                            onViewDefect={handleViewDefect} 
-                            // inspectionId={inspectionId} // Removed if not needed
+                            onViewDefect={handleViewDefect}
+                            canDeleteDefect={canDeleteDefect} 
+                            canEditDefect= {canEditDefect}
+                            // inspectionId={inspectionId} 
                         />
                     </div>
                 </TabsContent>

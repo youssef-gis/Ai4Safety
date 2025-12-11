@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import React from "react";
-import { ProjectStatusLabels } from "@/features/constants";
+//import { ProjectStatusLabels } from "@/features/constants";
+import { PROJECT_STATUS_CONFIG } from "@/features/constants";
 import { UpdateProjectStatus } from "../actions/update-project-status";
 import { toast } from "sonner";
 import { deleteProject } from "../actions/delete-project";
@@ -59,11 +60,22 @@ const ProjectMoreMenu = ({project, trigger}: ProjectMoreMenuProps) => {
     const projectStatusRadioGroup = (
         <DropdownMenuRadioGroup value={project.status} 
             onValueChange={handleProjectStatus} >
-            {(Object.keys(ProjectStatusLabels) as Array<ProjectStatus> ).map((key)=>(
-                <DropdownMenuRadioItem key={key} value={key}>
-                    {ProjectStatusLabels[key]}
-                </DropdownMenuRadioItem>
-            ))}
+            {(Object.entries(PROJECT_STATUS_CONFIG) as [ProjectStatus, typeof PROJECT_STATUS_CONFIG[ProjectStatus]][]).map(
+                ([key, config]) => {
+                    const StatusIcon = config.icon; // Get the icon component
+                    
+                    return (
+                    <DropdownMenuRadioItem 
+                        key={key} 
+                        value={key}
+                        className="cursor-pointer"
+                    >
+                        <StatusIcon className={`mr-2 h-4 w-4 ${config.color}`} />
+                        {config.label}
+                    </DropdownMenuRadioItem>
+                    );
+                }
+            )}
         </DropdownMenuRadioGroup>
     )
 
@@ -77,9 +89,9 @@ const ProjectMoreMenu = ({project, trigger}: ProjectMoreMenuProps) => {
       <DropdownMenuContent className="w-56" side="right" align="start" >
         <DropdownMenuLabel>Project Menu</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {projectStatusRadioGroup}
+        {  projectStatusRadioGroup}
         <DropdownMenuSeparator />
-        {deleteButton}
+        {  deleteButton}
       </DropdownMenuContent>
     </DropdownMenu>
     </>

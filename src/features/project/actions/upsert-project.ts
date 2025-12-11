@@ -9,6 +9,7 @@ import { redirect } from 'next/navigation';
 import {z} from 'zod';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-rerdirect';
 import { IsOwner } from '@/features/auth/utils/is-owner';
+import { getProjectPermissions } from '../permissions/get-project-permissions';
 
 
 const UpsertProjectSchema= z.object({
@@ -23,18 +24,25 @@ const UpsertProject = async (id: string | undefined,
     _actionStat:ActionState ,
     formData: FormData) =>{
     const {user, activeOrganization}= await getAuthOrRedirect()
-    //console.log(user, activeOrganization)
-
+    if (!user || !activeOrganization) {
+        return toActionState('Error', 'Not Authenticated');
+    }
+    
     try{
-        if(!user){
-            return toActionState('Error', 'Not Authenticated')
-        }
         if(id){
+            const permissions = await getProjectPermissions({
+                        userId: user.id,
+                        organizationId: activeOrganization.id
+            });
+            
+            if(!permissions.canEditProject){
+                        return toActionState('Error', 'Not authorized');
+            };
             const project = await prisma.project.findUnique({
                 where: {
                     id,
                 }
-            })
+            });
 
             if(!project || !IsOwner(user, project)){
                 return toActionState('Error', 'Not authorized');

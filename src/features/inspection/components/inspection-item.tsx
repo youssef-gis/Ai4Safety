@@ -17,11 +17,12 @@ import {  analysis_Path, three_D_viewer_Path } from "@/path";
 type InspectionItemPageProp = {
    
     inspection: Inspection ;
+    canDelete: boolean;
 }
 
 
 
-export const InspectionItem = ({ inspection}:InspectionItemPageProp) => {
+export const InspectionItem = ({ inspection, canDelete}:InspectionItemPageProp) => {
 
     //const inspections = await getInspections(projectId);
     // const inspectionMoreMenu= (
@@ -46,7 +47,7 @@ export const InspectionItem = ({ inspection}:InspectionItemPageProp) => {
                             conductedByUserId= {inspection.conductedByUserId}
                         />
                     )
-    const buttons= <>{inspection.status==='COMPLETED' && detailButton}{deleteButton}</>;
+    const buttons= <>{inspection.status==='COMPLETED' && detailButton}{ canDelete && deleteButton}</>;
     
     return ( 
         <TableRow key={inspection.id} >
