@@ -24,7 +24,7 @@ import { getOrientationFromRodrigues} from './get-Orientation-From-Rodrigues';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import Image from 'next/image';
 import { ImageViewerModal } from '../image-viewer-modal';
-import { getCameraPositionECEF, getRayFromPixel, getRayFromPixelFixed, intersectRayWithTileset, rodriguesToMatrix, snapPointToTileset } from './get-Ray-From-Pixel';
+import { getCameraPositionECEF, getRayFromPixel, intersectRayWithTileset, rodriguesToMatrix, snapPointToTileset } from './get-Ray-From-Pixel';
 import { debugCameraProjection } from './debug-projection';
 //import "@cesium/widgets/styles.css";
 
@@ -341,8 +341,10 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
         // Tileset info
         let distanceToTileset = 50;
         let tilesetCenterHeight = 0;
+        let tilesetCenter: any = null;
+
         if (tileset?.boundingSphere) {
-            const tilesetCenter = tileset.boundingSphere.center;
+            tilesetCenter = tileset.boundingSphere.center;
             const tilesetCarto = CesiumJs.Cartographic.fromCartesian(tilesetCenter);
             tilesetCenterHeight = tilesetCarto.height;
             distanceToTileset = CesiumJs.Cartesian3.distance(cameraPosECEF, tilesetCenter);
@@ -367,12 +369,16 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 check();
             });
         }
+        // ✅ Essential for accurate picking
+        scene.globe.depthTestAgainstTerrain = true;
         scene.render();
 
         // Camera intrinsics
         const cx = cameraData.width / 2;
         const cy = cameraData.height / 2;
         const f = cameraData.focal * Math.max(cameraData.width, cameraData.height);
+
+        console.log(`📷 Intrinsics: cx=${cx}, cy=${cy}, f=${f.toFixed(2)}`);
 
         // Rotation
         const R = rodriguesToMatrix(CesiumJs, cameraData.rotation);
@@ -389,27 +395,64 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
             let xn = (pixel.x - cx) / f;
             let yn = (pixel.y - cy) / f;
 
+            console.log(`  Pixel ${i}: (${pixel.x}, ${pixel.y}) → normalized (${xn.toFixed(4)}, ${yn.toFixed(4)})`);
+
             // Undistort
             const k1 = cameraData.k1 || 0;
-            if (Math.abs(k1) > 1e-8) {
+            const k2 = cameraData.k2 || 0;
+            if (Math.abs(k1) > 1e-8 || Math.abs(k2) > 1e-8) {
                 const xd = xn, yd = yn;
-                for (let iter = 0; iter < 15; iter++) {
+                // Newton-Raphson iteration for undistortion
+                for (let iter = 0; iter < 20; iter++) {
                     const r2 = xn * xn + yn * yn;
-                    xn = xd / (1 + k1 * r2);
-                    yn = yd / (1 + k1 * r2);
+                    const r4 = r2 * r2;
+                    const radialDist = 1 + k1 * r2 + k2 * r4;
+                    xn = xd / radialDist;
+                    yn = yd / radialDist;
                 }
+                console.log(`  Undistorted: (${xn.toFixed(4)}, ${yn.toFixed(4)})`);
             }
 
             // Direction
             const dirCam = new CesiumJs.Cartesian3(xn, yn, 1.0);
             CesiumJs.Cartesian3.normalize(dirCam, dirCam);
+
             const dirLocal = CesiumJs.Matrix3.multiplyByVector(Rt, dirCam, new CesiumJs.Cartesian3());
-            const dirECEF = CesiumJs.Matrix3.multiplyByVector(enuRot, dirLocal, new CesiumJs.Cartesian3());
+            
+            const dirENU = new CesiumJs.Cartesian3(
+                            dirLocal.x,      // East stays East
+                            dirLocal.y,     // Flip North (OpenSfM Y convention)
+                            dirLocal.z      // Flip Up (looking down from drone)
+                        );
+
+            const dirECEF = CesiumJs.Matrix3.multiplyByVector(enuRot, dirENU, new CesiumJs.Cartesian3());
+
             CesiumJs.Cartesian3.normalize(dirECEF, dirECEF);
 
+            // Validate direction (should point generally towards ground/tileset)
+            const dotWithDown = CesiumJs.Cartesian3.dot(
+                dirECEF, 
+                CesiumJs.Cartesian3.normalize(
+                    CesiumJs.Cartesian3.negate(cameraPosECEF, new CesiumJs.Cartesian3()),
+                    new CesiumJs.Cartesian3()
+                )
+            );
+            console.log(` Direction dot with down: ${dotWithDown.toFixed(4)} (should be positive for downward)`);
+
             const ray = new CesiumJs.Ray(cameraPosECEF, dirECEF);
+
+            const rayEndpoint = CesiumJs.Ray.getPoint(ray, 30); // 30m along ray
+            defectsDataSourceRef.current!.entities.add({
+                id: `debug_ray_${i}_${Date.now()}`,
+                polyline: {
+                    positions: [cameraPosECEF, rayEndpoint],
+                    width: 2,
+                    material: CesiumJs.Color.MAGENTA.withAlpha(0.5)
+                }
+            });
+
             const intersection = await intersectRayWithTileset(
-                CesiumJs, scene, ray, tileset, distanceToTileset * 3
+                CesiumJs, scene, ray, tileset, distanceToTileset * 3, cameraPosECEF
             );
 
             let finalPosition: any;
@@ -421,7 +464,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 
                 // Verify the hit is actually away from camera
                 const dist = CesiumJs.Cartesian3.distance(cameraPosECEF, finalPosition);
-                if (dist < 1) {
+                if (dist < 1 || dist > distanceToTileset * 5) {
                     // Bad hit - use fallback
                     console.warn(`Point ${i}: Hit too close (${dist.toFixed(2)}m), using fallback`);
                     finalPosition = CesiumJs.Ray.getPoint(ray, distanceToTileset);
@@ -431,9 +474,28 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 if (hitType.includes('tileset')) {
                     tilesetHits++;
                 }
-            } else {
-                finalPosition = CesiumJs.Ray.getPoint(ray, distanceToTileset);
-                hitType = 'fallback';
+            } else {// ✅ NEW: Smart Fallback
+                // 1. Calculate where the point "should" be in the air
+                const estimatedPoint = CesiumJs.Ray.getPoint(ray, distanceToTileset);
+                
+                // 2. Try to drop a vertical line down to find the tileset surface
+                // (Make sure snapPointToTileset is imported from your utils file)
+                const snapResult = await snapPointToTileset(
+                    CesiumJs, 
+                    scene, 
+                    estimatedPoint, 
+                    tileset, 
+                    50 // Look up/down 50 meters
+                );
+
+                if (snapResult.success) {
+                    finalPosition = snapResult.position;
+                    hitType = 'fallback-vertical-snap';
+                    
+                } else {
+                    finalPosition = estimatedPoint;
+                    hitType = 'fallback-floating';
+                }
             }
 
             // Log with verification
@@ -457,6 +519,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
 
         // Create visualization
         const id = `projection_${Date.now()}`;
+        const color = tilesetHits >= points2D.length / 2 ? CesiumJs.Color.LIME : CesiumJs.Color.YELLOW;
 
         // POLYLINE
         defectsDataSourceRef.current!.entities.add({
@@ -466,12 +529,9 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 width: 10,
                 material: new CesiumJs.PolylineGlowMaterialProperty({
                     glowPower: 0.4,
-                    color: tilesetHits > 0 ? CesiumJs.Color.LIME : CesiumJs.Color.YELLOW
+                    color: color
                 }),
-                depthFailMaterial: new CesiumJs.PolylineGlowMaterialProperty({
-                    glowPower: 0.3,
-                    color: CesiumJs.Color.ORANGE.withAlpha(0.7)
-                }),
+
                 clampToGround: false,
                 arcType: CesiumJs.ArcType.NONE
             }
@@ -484,6 +544,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
             if (ht.includes('tileset')) color = CesiumJs.Color.LIME;
             else if (ht.includes('globe')) color = CesiumJs.Color.CYAN;
             else if (ht === 'boundingSphere') color = CesiumJs.Color.YELLOW;
+            else if (ht.includes('fallback')) color = CesiumJs.Color.ORANGE;
 
             defectsDataSourceRef.current!.entities.add({
                 id: `${id}_pt_${idx}`,
@@ -494,8 +555,8 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                     outlineColor: CesiumJs.Color.BLACK,
                     outlineWidth: 3,
                     // Use a moderate value - visible but with depth awareness
-                    disableDepthTestDistance: 5000,
-                    heightReference: CesiumJs.HeightReference.NONE
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                    
                 }
             });
         });
@@ -505,7 +566,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
         // Fly to see the result
         cesiumViewer.current.flyTo(defectsDataSourceRef.current!.entities.getById(id)!, {
             duration: 1.0,
-            offset: new CesiumJs.HeadingPitchRange(0, CesiumJs.Math.toRadians(-30), distanceToTileset)
+            offset: new CesiumJs.HeadingPitchRange(0, CesiumJs.Math.toRadians(-45), distanceToTileset*0.8)
         });
 
         scene.requestRender();

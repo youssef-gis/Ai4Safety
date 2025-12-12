@@ -244,98 +244,124 @@ export const intersectRayWithTileset = async (
     scene: any,
     ray: any,
     tileset: any,
-    maxDistance: number
+    maxDistance: number,
+    cameraPos: any
 ): Promise<{ position: any; hitType: string } | null> => {
     
+    // Force scene render first
     scene.render();
+    
+    const minValidDistance = 2; // Minimum 2 meters from camera
 
-    // METHOD 1: pickFromRay with all objects
+    // METHOD 1: pickFromRay - most accurate for tilesets
     try {
-        const result = scene.pickFromRay(ray, [], 0.0001);
+        const result = scene.pickFromRay(ray, [scene.globe], 0.001);
         if (result?.position) {
-            // Verify it's not at the ray origin
-            const dist = CesiumJs.Cartesian3.distance(ray.origin, result.position);
-            if (dist > 1) { // At least 1 meter away
+            const dist = CesiumJs.Cartesian3.distance(cameraPos, result.position);
+            if (dist > minValidDistance && dist < maxDistance) {
                 const obj = result.object;
-                let hitType = 'pickFromRay-unknown';
-                if (obj?.primitive === tileset || obj?.tileset === tileset || 
+                if (obj?.primitive === tileset || obj?.tileset === tileset ||
                     obj?.content?.tileset === tileset) {
-                    hitType = 'pickFromRay-tileset';
-                } else if (obj?.primitive instanceof CesiumJs.Globe) {
-                    hitType = 'pickFromRay-globe';
-                } else {
-                    hitType = 'pickFromRay-other';
+                    return { position: result.position, hitType: 'pickFromRay-tileset' };
                 }
-                return { position: result.position, hitType };
+                return { position: result.position, hitType: 'pickFromRay-other' };
             }
         }
-    } catch (e) { 
+    } catch (e) {
         console.debug("pickFromRay error:", e);
     }
 
-    // METHOD 2: drillPickFromRay
+    // METHOD 2: drillPickFromRay - finds all intersections
     try {
-        const results = scene.drillPickFromRay(ray, 20, [], 0.0001);
+        const results = scene.drillPickFromRay(ray, 30, [scene.globe], 0.001);
         if (results?.length > 0) {
+            // First try to find tileset hit
             for (const r of results) {
                 if (!r.position) continue;
-                const dist = CesiumJs.Cartesian3.distance(ray.origin, r.position);
-                if (dist > 1) {
-                    const obj = r.object;
-                    if (obj?.primitive === tileset || obj?.tileset === tileset ||
-                        obj?.content?.tileset === tileset) {
-                        return { position: r.position, hitType: 'drillPick-tileset' };
-                    }
+                const dist = CesiumJs.Cartesian3.distance(cameraPos, r.position);
+                if (dist < minValidDistance || dist > maxDistance) continue;
+                
+                const obj = r.object;
+                if (obj?.primitive === tileset || obj?.tileset === tileset ||
+                    obj?.content?.tileset === tileset) {
+                    return { position: r.position, hitType: 'drillPick-tileset' };
                 }
             }
-            // Return first valid hit
+            // Then accept any valid hit
             for (const r of results) {
                 if (!r.position) continue;
-                const dist = CesiumJs.Cartesian3.distance(ray.origin, r.position);
-                if (dist > 1) {
+                const dist = CesiumJs.Cartesian3.distance(cameraPos, r.position);
+                if (dist > minValidDistance && dist < maxDistance) {
                     return { position: r.position, hitType: 'drillPick-other' };
                 }
             }
         }
-    } catch (e) { /* Continue */ }
+    } catch (e) {
+        console.debug("drillPickFromRay error:", e);
+    }
 
-    // METHOD 3: Bounding sphere - FIXED for camera inside sphere
+    // METHOD 3: Sample along ray for tileset intersection
+    if (tileset?.boundingSphere) {
+        try {
+            const steps = 50;
+            const stepSize = maxDistance / steps;
+            
+            for (let i = 1; i <= steps; i++) {
+                const t = i * stepSize;
+                const testPoint = CesiumJs.Ray.getPoint(ray, t);
+                
+                // Check if point is inside tileset bounding sphere
+                const distToCenter = CesiumJs.Cartesian3.distance(testPoint, tileset.boundingSphere.center);
+                if (distToCenter < tileset.boundingSphere.radius) {
+                    // Try picking at this location
+                    const testCarto = CesiumJs.Cartographic.fromCartesian(testPoint);
+                    const screenPos = CesiumJs.SceneTransforms.worldToWindowCoordinates(scene, testPoint);
+                    
+                    if (screenPos) {
+                        const pick = scene.pick(screenPos);
+                        if (pick?.primitive === tileset || pick?.tileset === tileset) {
+                            const pos = scene.pickPosition(screenPos);
+                            if (pos) {
+                                const dist = CesiumJs.Cartesian3.distance(cameraPos, pos);
+                                if (dist > minValidDistance) {
+                                    return { position: pos, hitType: 'rayMarch-tileset' };
+                                }
+                            }
+                        }
+                    }
+                }
+            }            
+        } catch (e) {
+            console.debug("Method 3 error:", e);
+        }
+    }
+
+    // METHOD 4: Bounding sphere intersection (fallback)
     if (tileset?.boundingSphere) {
         const sphere = tileset.boundingSphere;
         const intersection = CesiumJs.IntersectionTests.raySphere(ray, sphere);
         
         if (intersection) {
-            // Check if camera is inside the bounding sphere
-            const distToCenter = CesiumJs.Cartesian3.distance(ray.origin, sphere.center);
+            const distToCenter = CesiumJs.Cartesian3.distance(cameraPos, sphere.center);
             const isInside = distToCenter < sphere.radius;
             
-            // Use exit point if inside, entry point if outside
+            // Pick the right intersection point
             let t = isInside ? intersection.stop : intersection.start;
-            
-            // Make sure t is positive and reasonable
             if (t <= 0) t = intersection.stop;
-            if (t <= 0 || t > maxDistance) {
-                // Fallback: project to sphere center distance
-                t = distToCenter;
+            if (t > 0 && t < maxDistance) {
+                const point = CesiumJs.Ray.getPoint(ray, t);
+                const dist = CesiumJs.Cartesian3.distance(cameraPos, point);
+                if (dist > minValidDistance) {
+                    return { position: point, hitType: 'boundingSphere' };
+                }
             }
             
-            const point = CesiumJs.Ray.getPoint(ray, t);
-            const dist = CesiumJs.Cartesian3.distance(ray.origin, point);
-            
-            console.log(`BoundingSphere: inside=${isInside}, t=${t.toFixed(2)}, dist=${dist.toFixed(2)}`);
-            
-            if (dist > 1) {
-                return { position: point, hitType: 'boundingSphere' };
+            // Use distance to center as fallback
+            if (distToCenter > minValidDistance && distToCenter < maxDistance) {
+                const point = CesiumJs.Ray.getPoint(ray, distToCenter);
+                return { position: point, hitType: 'boundingSphere-center' };
             }
         }
-    }
-
-    // METHOD 4: Simple distance-based fallback
-    // Project ray to the distance of tileset center
-    if (tileset?.boundingSphere) {
-        const distToCenter = CesiumJs.Cartesian3.distance(ray.origin, tileset.boundingSphere.center);
-        const point = CesiumJs.Ray.getPoint(ray, distToCenter);
-        return { position: point, hitType: 'distance-fallback' };
     }
 
     return null;
