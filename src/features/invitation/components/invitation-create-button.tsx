@@ -75,7 +75,7 @@ const InvitationCreateButton = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <SubmitButton label="Invite" />
+            <SubmitButton label="Invite" disabled />
           </DialogFooter>
         </Form>
       </DialogContent>

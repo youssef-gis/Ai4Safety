@@ -33,10 +33,11 @@ export const getProject = async(projectId:string ) => {
 
     const permissions = await getProjectPermissions({
         userId: user?.id, 
-        organizationId: project.organizationId})
+        organizationId: project.organizationId});
+    const isOwner = IsOwner(user, project);
 
-    return {...project, isOwner: IsOwner(user, project), permissions:{
-        canDeleteProject: IsOwner(user, project) && !!permissions.canDeleteProject,
-        canEditProject: IsOwner(user, project) && !!permissions.canEditProject
+    return {...project, isOwner, permissions:{
+        canDeleteProject: isOwner && !!permissions.canDeleteProject,
+        canEditProject: isOwner && !!permissions.canEditProject
     }};
 };

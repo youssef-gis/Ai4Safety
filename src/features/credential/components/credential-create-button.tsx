@@ -83,7 +83,7 @@ const CredentialCreateButton = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <SubmitButton label="Create" />
+            <SubmitButton label="Create" disabled/>
           </DialogFooter>
         </Form>
       </DialogContent>

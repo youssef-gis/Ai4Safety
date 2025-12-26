@@ -36,6 +36,7 @@ export const fromAnalysis = (analysis: AttachmentSubject | null) => {
     entity: "ANALYSIS" as SupplementEntity,
     entityId: analysis.id,
     analysisId: analysis.id,
+    projectId: analysis.inspection.projectId,
     inspectionId: analysis.inspectionId,
     jobId: analysis.jobId,
     organizationId: analysis.inspection.project.organizationId,

@@ -18,7 +18,7 @@ const InvitationAcceptForm = ({ tokenId }: InvitationAcceptFormProps) => {
 
   return (
     <Form action={action} actionState={actionState}>
-      <SubmitButton label="Accept" />
+      <SubmitButton label="Accept" disabled/>
     </Form>
   );
 };

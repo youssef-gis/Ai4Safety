@@ -76,13 +76,15 @@ const UpsertProject = async (id: string | undefined,
 
     revalidatePath(projectsPath());
 
-    if (id){
-        await setCookieByKey("toast", "Project Updated!")
-        redirect(projectPath(id));
+    await setCookieByKey(
+    "toast",
+    id ? "Project Updated!" : "Project Created!"
+    );
 
-    }
-  
-    return toActionState('Success','Project Created')
+    return toActionState(
+    "Success",
+    id ? "Project Updated" : "Project Created"
+    );
 };
 
 export {UpsertProject};

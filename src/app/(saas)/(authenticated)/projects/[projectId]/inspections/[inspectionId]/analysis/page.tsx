@@ -9,6 +9,7 @@ import { InspectionContextBar, InspectionContextType } from "@/features/inspecti
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { getDefectPermissions } from "@/features/defects/permissions/get-defect-permissions";
 import { MapLayer } from "@/components/3D_Viewer/types/map";
+import { DetectionSeverity, DetectionStatus, DetectionType } from "@prisma/client";
 
 type PageProps = {
   params: Promise<{ projectId: string; inspectionId: string }>;
@@ -48,15 +49,18 @@ export default async function AnalysisPage({ params }: PageProps) {
   const apiBaseUrl = `/api/tiles/${activeOrganization?.id}/${projectId}/${inspectionId}`;
   // 1. URL for the 3D Model
   // The API sees .json and maps it to "3d_tiles/model/"
-  const tilesetUrl = `${apiBaseUrl}/tileset.json`;
+ // const tilesetUrl = `${apiBaseUrl}/tileset.json`;
+  const tilesetUrl = `/model/tileset.json`;
 
   // 2. URL for the Camera Positions
   // The API sees .geojson and maps it to "odm_report/"
-  const camerasUrl = `${apiBaseUrl}/shots.geojson`;
+   //const camerasUrl = `${apiBaseUrl}/shots.geojson`;
+  const camerasUrl = `/shots.geojson`;
 
   // 3. Base URL for Images (to be passed to children)
   // When you append "/image.jpg", the API maps it to "uploaded_images/"
   const proxyBaseUrl = apiBaseUrl;
+  //const proxyBaseUrl = '';
   //  CONSTRUCT THE LAYERS
   const layers: MapLayer[] = [
     // {
@@ -88,6 +92,14 @@ export default async function AnalysisPage({ params }: PageProps) {
 
   if (!analysis) return <div>Analysis not found</div>;
   const projectName = analysis.inspection.project.name;
+
+//   const detections = analysis.detections.map((d) => ({
+//   ...d,
+//   type: d.type ?? DetectionType.SPALLING_CRACK, // Provide a default
+//   severity: d.severity ?? DetectionSeverity.LOW,
+//   status: d.status ?? DetectionStatus.NEW,
+// }));
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)] w-full overflow-hidden">

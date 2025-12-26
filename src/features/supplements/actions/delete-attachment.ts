@@ -49,6 +49,7 @@ export const deleteAttachment = async (id: string) => {
       name: "app/supplement.deleted",
       data: {
         organizationId: subject.organizationId,
+        projectId: subject.projectId,
         entityId: subject.entityId,
         entity: attachment.entity,
         fileName: attachment.name,

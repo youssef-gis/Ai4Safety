@@ -10,19 +10,20 @@ import { notFound } from "next/navigation";
 
 
 type ProjectEditProps = {
-    params : {
-        projectId: string;
-    }
-}
+  params: Promise<{
+    projectId: string;
+  }>;
+};
+
 
 const ProjectEditPage = async ({params}:ProjectEditProps) => {
-    const { projectId } =  await(params);
+    const { projectId } =  await params;
     const project = await getProject(projectId);
 
 
     const isProjectFound= !!project;
 
-    if (!isProjectFound || !project.isOwner){
+    if (!project || typeof project === 'object' && 'serverError' in project || !('isOwner' in project) || !project.isOwner) {
         notFound();
     }
 

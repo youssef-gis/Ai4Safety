@@ -27,7 +27,9 @@ const Analysis3DViewerPage = async ({params}:TabularAnalysisPageProps) => {
             </div>
              {/* overflow-hidden -1 w-full relative overflow-hidden */}
             <div className="relative" style={{ height: '490px' }}>
-                <Analysis3DViewer tilesetUrl = {tilesetUrl} inspectionId= {inspectionId} initialDetections={analysis.detections}/>
+                <Analysis3DViewer tilesetUrl={tilesetUrl} inspectionId={inspectionId} initialDetections={analysis.detections} 
+                    proxyBaseUrl={""} camerasUrl={"/shots.geojson"} canDeleteDefect={false} 
+                    canEditDefect={false} layers={[]}/>
             </div>
            
             

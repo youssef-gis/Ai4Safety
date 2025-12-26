@@ -24,9 +24,15 @@ export type DrawingMode = 'none' | 'point' | 'polyline' | 'polygon';
 
 export interface DefectCandidate {
     positions: Cartesian3[];
-    type: 'polyline' | 'polygon';
+    type: 'polyline' | 'polygon' | 'point';
     measurement: string;
     labelPosition?: Cartesian3;
+    // Add these optional fields for 2D support
+    annotation2D?: {x:number, y:number}[];
+    sourceImageId?: string | null;
+    locationOn3dModel?: any;
+    status?: string;
+    severity?: string;
 }
 
 interface UseDrawingManagerProps {
@@ -155,21 +161,7 @@ export const useDrawingManager = ({ CesiumJs, viewerRef, onShapeCreated }: UseDr
     return null;
 }, [viewerRef, CesiumJs]);
 
-    // const clearActiveDrawing = useCallback(() => {
-    //     const viewer = viewerRef.current;
-    //     if (!viewer) return;
-    //     if (activeShapeRef.current) {
-    //         viewer.entities.remove(activeShapeRef.current);
-    //         activeShapeRef.current = null;
-    //     }
-    //     if (activeLabelRef.current) {
-    //         viewer.entities.remove(activeLabelRef.current);
-    //         activeLabelRef.current = null;
-    //     }
-    //     activePointsRef.current.forEach(p => viewer.entities.remove(p));
-    //     activePointsRef.current = [];
-    //     floatingPointRef.current = null;
-    // }, [viewerRef]);
+
 
     const clearActiveDrawing = useCallback(() => {
 

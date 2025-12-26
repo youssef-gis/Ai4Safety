@@ -27,7 +27,7 @@ export const PasswordResetForm = ( {tokenId}: PasswordResetFormsProps ) => {
                 defaultValue={ actionState.payload?.get('confirmPassword') as string } />
             <FieldErrorMsg name="confirmPassword" actionState={actionState} />
 
-            <SubmitButton label="Reset Password" />
+            <SubmitButton label="Reset Password"   disabled={false}/>
         </Form>
      );
 }

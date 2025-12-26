@@ -29,6 +29,12 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
     const [defectCandidate, setDefectCandidate] = useState<DefectCandidate | null>(null);
     const [tempEntities, setTempEntities] = useState<Entity[]>([]); 
     const [editingDefect, setEditingDefect] = useState<Detection | null>(null);
+    const [defectToEditImage, setDefectToEditImage] = useState<Detection | null>(null);
+
+    // Handler passed to the form
+    const handleOpenImageEdit = (defect: Detection) => {
+        setDefectToEditImage(defect);
+    };
 
     const handleDefectDetected = (candidate: DefectCandidate, entities: Entity[]) => {
         setDefectCandidate(candidate);
@@ -54,22 +60,27 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
     };
 
         // Common style for both forms 
-    const formContainerStyle = "absolute top-2 right-2 z-[1000] w-80 md:w-96 bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[calc(100%-1rem)]";
+    const formContainerStyle = "absolute top-2 right-2 z-[3000] w-80 md:w-96 bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[calc(100%-1rem)]";
 
 
     return (
         <div className="relative w-full h-full overflow-hidden">
             <CesiumWrapper
                 proxyBaseUrl={proxyBaseUrl}
-                camerasUrl={camerasUrl} 
+                camerasUrl={camerasUrl}
                 tilesetUrl={tilesetUrl}
                 inspectionId={inspectionId}
                 initialDetections={initialDetections}
                 onDefectDetected={handleDefectDetected}
                 onDefectSelected={handleDefectSelected}
                 focusedDefectId={focusedDefectId}
-                layers={layers} 
-                >
+                layers={layers}
+                defectToEditImage={defectToEditImage}
+                onCloseImageEdit={() => setDefectToEditImage(null)} showTileset={false} showDefects={false} onToggleTileset={function (): void {
+                    throw new Error("Function not implemented.");
+                } } onToggleDefects={function (): void {
+                    throw new Error("Function not implemented.");
+                } }                >
                 {/* Children rendered INSIDE the fullscreen div */}
                 
                 {/* Form for CREATING a new defect */}
@@ -85,6 +96,10 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
                                         x: pos.x, y: pos.y, z: pos.z 
                                     })),
                                     measurement: defectCandidate.measurement,
+                                    
+                                    annotation2D: defectCandidate.annotation2D, 
+                                    sourceImageId: defectCandidate.sourceImageId,
+                                    
                                     labelPosition: defectCandidate.labelPosition ? {
                                         x: defectCandidate.labelPosition.x,
                                         y: defectCandidate.labelPosition.y,
@@ -95,6 +110,7 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
                                 onFormSuccess={handleFormSuccess}
                                 canDelete={canDeleteDefect}
                                 canEdit= {canEditDefect}
+                                onOpenImage={handleOpenImageEdit}
                             />
                         </div>
                     </div>
@@ -111,6 +127,7 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
                                 onFormSuccess={handleFormSuccess}
                                 canDelete={canDeleteDefect}
                                 canEdit= {canEditDefect}
+                                onOpenImage={handleOpenImageEdit}
                             />
                         </div>
                     </div>

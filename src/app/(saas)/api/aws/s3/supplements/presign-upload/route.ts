@@ -5,7 +5,8 @@ import { s3 } from "@/lib/aws";
 import { nanoid } from "nanoid";
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { getActiveOrganization } from "@/features/organization/queries/get-active-organization";
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto'; 
 
 export async function POST(request: NextRequest) {
 
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a unique ID for the attachment on the server
-    const attachmentId = uuidv4();
+    const attachmentId = randomUUID();
     // You can add conditions here for file size, type, etc.
     const { url, fields } = await createPresignedPost(s3, {
       Bucket: process.env.AWS_BUCKET_NAME || '',

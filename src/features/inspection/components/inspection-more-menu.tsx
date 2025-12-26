@@ -51,7 +51,7 @@ export const InspectionMoreMenu = ({
                 <DropdownMenuLabel>Role</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup 
-                   value={membershipRole} 
+                   value={MembershipRole.MEMBER} 
                    onValueChange={handleUpdateMembershipRole}
                 >
                     <DropdownMenuRadioItem value="ADMIN" >Admin</DropdownMenuRadioItem>

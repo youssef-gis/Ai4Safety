@@ -11,6 +11,7 @@ export type SupplementDeleteEventArgs = {
     entityId: string;
     entity: SupplementEntity;
     fileName: string;
+    projectId: string;
   };
 };
 
@@ -18,7 +19,7 @@ export const supplementDeletedEvent = inngest.createFunction(
   { id: "supplement-deleted" },
   { event: "app/supplement.deleted" },
   async ({ event }) => {
-    const { organizationId, entityId, entity, fileName, attachmentId } =
+    const { organizationId, entityId, entity, fileName, attachmentId, projectId } =
       event.data;
 
     try {
@@ -31,6 +32,7 @@ export const supplementDeletedEvent = inngest.createFunction(
             entity,
             fileName,
             attachmentId,
+            projectId
           }),
         })
       );

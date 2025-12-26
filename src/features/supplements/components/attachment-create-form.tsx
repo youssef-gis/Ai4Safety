@@ -42,7 +42,7 @@ const AttachmentCreateForm = ({
       />
       <FieldErrorMsg actionState={actionState} name="files" />
 
-      {buttons || <SubmitButton label="Upload" />}
+      {buttons || <SubmitButton label="Upload" disabled={false} />}
     </Form>
   );
 };

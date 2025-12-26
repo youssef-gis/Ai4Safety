@@ -336,6 +336,9 @@ model Detection {
   notes             String?           @db.Text
   locationOn3dModel Json?             // { "x": 12.3, "y": 45.6, "z": 78.9 }
 
+  annotation2D     Json?
+  sourceImageId    String?
+  
   // Foreign Keys
   analysisId        String
 

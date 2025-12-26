@@ -59,7 +59,7 @@ const AttachmentCreateButton = ({
               <Button type="button" variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <SubmitButton label="Upload" />
+              <SubmitButton label="Upload" disabled={false} />
             </DialogFooter>
           }
           onSuccess={handleSuccess}

@@ -22,10 +22,10 @@ import { Badge } from "@/components/ui/badge"
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type Defect = {
-  id: string
-  type: DetectionType
-  severity: DetectionSeverity
-  status: DetectionStatus
+  id: string;
+  type: DetectionType | null;
+  severity: DetectionSeverity | null;
+  status: DetectionStatus | null;
 }
 
 export const getColumns = (onViewDefect: (id: string) => void): ColumnDef<Defect>[] => [

@@ -1,16 +1,22 @@
-'use client'
+'use client';
+
+if (typeof window !== "undefined") {
+            (window as any).CESIUM_BASE_URL = "/cesium";
+        }
+
 
 import dynamic from 'next/dynamic'
 import React, { useEffect, useRef, useState } from 'react';
 import { CesiumType } from './types/cesium';
 import { Detection } from '@prisma/client';
-import { type Entity } from 'cesium';
+//import { type Entity } from 'cesium';
 import { DefectCandidate } from './hooks/use-drawing-manager';
 import { Spinner } from '../spinner';
 import { SeverityVisibility } from './components/layer-control'; 
 import { MapLayer } from './types/map';
 
 // Define props for the Dynamic Component
+type CesiumEntity = any;
 export interface CesiumComponentProps {
     CesiumJs: CesiumType;
     cesiumContainerRef: React.RefObject<HTMLDivElement | null> ;
@@ -23,7 +29,8 @@ export interface CesiumComponentProps {
     initialDetections: Detection[];
 
     // Event Handlers
-    onDefectDetected?: (candidate: DefectCandidate, tempEntities: Entity[]) => void;
+
+    onDefectDetected?: (candidate: DefectCandidate, tempEntities: CesiumEntity[]) => void;
     onDefectSelected?: (defect: Detection) => void;
     focusedDefectId?: string | null;
     showTileset: boolean;
@@ -33,6 +40,8 @@ export interface CesiumComponentProps {
     onToggleSeverity: (key: keyof SeverityVisibility) => void;
     onToggleAllDefects: (show: boolean) => void;
     layers: MapLayer[];
+    defectToEditImage: Detection | null;
+    onCloseImageEdit: () => void;
 }
 
 
@@ -56,13 +65,15 @@ type WrapperProps = {
   inspectionId: string;
   initialDetections: Detection[];
   // Parent Listeners
-  onDefectDetected?: (candidate: DefectCandidate, tempEntities: Entity[]) => void;
+  onDefectDetected?: (candidate: DefectCandidate, tempEntities: CesiumEntity[]) => void;
   onDefectSelected?: (defect: Detection) => void;
   focusedDefectId?: string | null;
   showTileset: boolean;
   showDefects: boolean;
   onToggleTileset: () => void;
   onToggleDefects: () => void;
+  defectToEditImage: Detection | null; 
+  onCloseImageEdit: () => void;
   children?: React.ReactNode; 
 };
 
@@ -76,6 +87,8 @@ export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
     onDefectDetected,
     onDefectSelected,
     focusedDefectId,
+    defectToEditImage,
+    onCloseImageEdit,
     children
 }) => {
     const [CesiumJs, setCesiumJs] = useState<CesiumType | null>(null);
@@ -112,13 +125,13 @@ export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
 
     
     useEffect(() => {
-        if (CesiumJs !== null) return
-        const CesiumImportPromise = import('cesium');
-        Promise.all([CesiumImportPromise]).then((promiseResults) => {
-            const { ...Cesium } = promiseResults[0];
-            setCesiumJs(Cesium);
+        if (CesiumJs !== null) return;
+
+        import("cesium").then((Cesium) => {
+            setCesiumJs(Cesium as CesiumType);
         });
     }, [CesiumJs]);
+
 
     const handleFullscreenToggle = () => {
         if (fullscreenWrapperRef.current) {
@@ -166,6 +179,8 @@ export const CesiumWrapper: React.FunctionComponent<WrapperProps> = ({
                         onToggleSeverity={handleToggleSeverity}
                         onToggleAllDefects={handleToggleAllDefects}
                         layers={layers}
+                        defectToEditImage={defectToEditImage}
+                        onCloseImageEdit={onCloseImageEdit}
                     />
             ) : null}
             {children}

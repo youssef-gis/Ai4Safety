@@ -17,7 +17,7 @@ export const EmailVerificationForm = () => {
                 defaultValue={ actionState.payload?.get('code') as string } />
             <FieldErrorMsg name="code" actionState={actionState} />
 
-            <SubmitButton label="Verify Email" />
+            <SubmitButton label="Verify Email" disabled />
         </Form>
      );
 };

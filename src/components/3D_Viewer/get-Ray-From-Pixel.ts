@@ -273,7 +273,7 @@ export const intersectRayWithTileset = async (
 
     // METHOD 2: drillPickFromRay - finds all intersections
     try {
-        const results = scene.drillPickFromRay(ray, 30, [scene.globe], 0.001);
+        const results = scene.drillPickFromRay(ray, 10, [scene.globe], 0.001);
         if (results?.length > 0) {
             // First try to find tileset hit
             for (const r of results) {
@@ -288,13 +288,13 @@ export const intersectRayWithTileset = async (
                 }
             }
             // Then accept any valid hit
-            for (const r of results) {
-                if (!r.position) continue;
-                const dist = CesiumJs.Cartesian3.distance(cameraPos, r.position);
-                if (dist > minValidDistance && dist < maxDistance) {
-                    return { position: r.position, hitType: 'drillPick-other' };
-                }
-            }
+            // for (const r of results) {
+            //     if (!r.position) continue;
+            //     const dist = CesiumJs.Cartesian3.distance(cameraPos, r.position);
+            //     if (dist > minValidDistance && dist < maxDistance) {
+            //         return { position: r.position, hitType: 'drillPick-other' };
+            //     }
+            // }
         }
     } catch (e) {
         console.debug("drillPickFromRay error:", e);

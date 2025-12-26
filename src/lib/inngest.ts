@@ -1,4 +1,3 @@
-import { AttachmentDeleteEventArgs } from '@/features/attachments/events/event-attachment-deleted';
 import { SupplementDeleteEventArgs } from '@/features/supplements/events/event-attachment-deleted';
 import { EmailVeriificationEventArgs } from '@/features/auth/events/event-email-verification';
 import { InvitationCreateEventArgs } from '@/features/invitation/events/event-invitation-created';
@@ -12,7 +11,7 @@ type Events = {
     'app/password.password-reset':PasswodResetEventArgs;
     'app/auth.sign-up': EmailVeriificationEventArgs;
     "app/invitation.created" : InvitationCreateEventArgs;
-    "app/attachment.deleted": AttachmentDeleteEventArgs;
+   
     "app/supplement.deleted": SupplementDeleteEventArgs;
     "app/organization.created": OrganizationCreateEventArgs;
     "app/inspection.started": InspectionStartedEventArgs;
@@ -21,5 +20,9 @@ type Events = {
 
 export const inngest = new Inngest({
     id: 'road-to-next-js',
+    eventKey:
+    process.env.NODE_ENV === "production"
+      ? process.env.INNGEST_EVENT_KEY
+      : undefined,
     schemas: new EventSchemas().fromRecord<Events>(),
 });

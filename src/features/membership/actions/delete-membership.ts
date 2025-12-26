@@ -16,6 +16,11 @@ export const deleteMembership = async({
     const {user}=await getAuthOrRedirect();
     
     const memberships = await getMemberships(organizationId);
+
+    if (!Array.isArray(memberships)) {
+        return memberships; // already an ActionState
+        }
+
     
     const isLastMembership = (memberships ?? []).length <= 1 ;
 

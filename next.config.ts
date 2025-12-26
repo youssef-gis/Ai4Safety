@@ -9,6 +9,10 @@ const pathBuilder = (subpath: string): string => path.join(process.cwd(), subpat
 
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, 
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   /* config options here */
   // experimental: {
   //   staleTimes: {

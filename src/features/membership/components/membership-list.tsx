@@ -13,6 +13,13 @@ type MembershipListPageProp = {
 }
 export const MembershipList = async({organizationId}:MembershipListPageProp) => {
     const memberships = await getMemberships(organizationId);
+    if (!Array.isArray(memberships)) {
+            return (
+            <div className="text-sm text-destructive">
+                {memberships.message}
+            </div>
+            );
+        }
     
     return ( 
         <Table>

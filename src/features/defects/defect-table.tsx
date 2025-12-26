@@ -2,6 +2,7 @@
 import { DataTable } from "@/components/data-table"
 import { getColumns, Defect } from "./columns"
 import { getDefects } from "./queries/get-defects";
+import { DetectionSeverity, DetectionStatus, DetectionType } from "@prisma/client";
 
 // async function getData(): Promise<Defect[]> {
 //   // Fetch data from your API here.
@@ -82,13 +83,16 @@ import { getDefects } from "./queries/get-defects";
 //   ]
 // };
 
+
 type DefectTableProps = {
-  //inspectionId: string;
+  inspectionId: string;
   data: Defect[]; // Data is now passed from parent
   onViewDefect: (id: string) => void;
+  canDeleteDefect: boolean;  // Add this
+  canEditDefect: boolean;    // Add this
 };
 
-export default  function DefectTable({ data, onViewDefect }: DefectTableProps) {
+export default  function DefectTable({ data, onViewDefect, canDeleteDefect, canEditDefect }: DefectTableProps) {
   //const data = await getData();
   const defects  =  getColumns(onViewDefect);
   if (!defects)return;

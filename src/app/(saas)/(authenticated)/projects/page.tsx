@@ -1,6 +1,7 @@
 import Heading from "@/components/heading";
 import { Spinner } from "@/components/spinner";
-import { searchParamsCache } from "@/features/ticket/search-params";
+//import { searchParamsCache } from "@/features/ticket/search-params";
+import { searchParamsCache } from "@/features/project/search-params";
 import { ProjectLisT } from "@/features/project/components/project-list";
 import { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
@@ -14,10 +15,11 @@ import { getInspectionPermissions } from "@/features/inspection/permissions/get-
 import { getProjectPermissions } from "@/features/project/permissions/get-project-permissions";
 
 type ProjectsPageProps = {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }
 
 export default async function ProjectsPage({searchParams}: ProjectsPageProps) {
+  const resolvedSearchParams = await searchParams;
   const {user , activeOrganization}= await getAuthOrRedirect();
   if (!user || !activeOrganization) {
               return toActionState('Error', 'Not Authenticated');
@@ -48,7 +50,7 @@ export default async function ProjectsPage({searchParams}: ProjectsPageProps) {
     
             <Suspense fallback={<Spinner />}>
                 {/* @ts-expect-error Async Server Component */}
-                <ProjectLisT   byOrganization searchParams={searchParamsCache.parse(searchParams)} 
+                <ProjectLisT   byOrganization searchParams={searchParamsCache.parse(resolvedSearchParams)} 
                             canEdit={permissions.canEditProject} canDelete={permissions.canDeleteProject}  
                 />
             </Suspense>

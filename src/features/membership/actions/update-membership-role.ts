@@ -22,6 +22,10 @@ export const updateMembershipRole =async  ({
         await getAdminOrRedirect(organizationId);
         
         const memberships = await getMemberships(organizationId);
+        if (!Array.isArray(memberships)) {
+            return memberships; // already an ActionState
+        }
+
         const targetMembership = (memberships ?? []).find(
             (membership)=>membership.userId === userId
         );

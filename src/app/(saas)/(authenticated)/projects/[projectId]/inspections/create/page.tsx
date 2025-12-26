@@ -13,7 +13,17 @@ type InspectionCreatePageProp = {
 const InspectionCreatePage = async({params}:InspectionCreatePageProp) => {
     await getAuthOrRedirect();
     const {projectId}= await params;
-    const project = await getProject(projectId);
+
+    const projectResult = await getProject(projectId);
+
+    // Handle null or ActionState (error) cases
+    if (!projectResult || !('name' in projectResult)) {
+        return notFound();
+    }
+
+    // Now TypeScript knows projectResult has 'name' property
+    const project = projectResult;
+
     if (!project) return notFound();
     return ( 
         <div className="flex flex-col gap-y-8 max-w-5xl mx-auto w-full">

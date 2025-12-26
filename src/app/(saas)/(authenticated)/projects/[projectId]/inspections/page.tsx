@@ -13,6 +13,7 @@ import { InspectionList } from "@/features/inspection/components/inspection-list
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { toActionState } from "@/components/forms/utils/to-action-state";
 import { getInspectionPermissions } from "@/features/inspection/permissions/get-inspection-permissions";
+import notFound from "../not-found";
 
 type InspectionsPageProps = {
     params: Promise<{projectId: string}>;
@@ -32,8 +33,16 @@ const Inspectionspage = async({params}:InspectionsPageProps) => {
         
 
     //const isAdmin = activeOrganization?.membershipByUser.membershipRole ===  'ADMIN';
-    const project = await getProject(projectId);
+    
+    const projectResult = await getProject(projectId);
+    // Handle null or ActionState (error) cases
+    if (!projectResult || !('name' in projectResult)) {
+            return notFound();
+        }
+    // Now TypeScript knows projectResult has 'name' property
+    const project = projectResult;
     if(!project) return null
+    
     return ( 
         <div className="flex-1 flex flex-col gap-y-8" >
             <Heading 

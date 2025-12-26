@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, ImageIcon, X } from 'lucide-react';
 
 import { Detection } from "@prisma/client";
 
@@ -36,17 +36,19 @@ import { cn } from "@/lib/utils";
 type DetectionUpdateFormProps = {
     detection?: Detection;
     inspectionId: string;
-    geometry?: { type: 'polyline' | 'polygon'; coordinates: {x: number, y: number, z: number}[], 
+    geometry?: { type: 'polyline' | 'polygon' | 'point'; coordinates: {x: number, y: number, z: number}[], 
                 measurement?: string; labelPosition?: {x: number, y: number, z: number}; 
+                annotation2D?: {x: number, y: number}[] | null; sourceImageId?: string | null
             };
     onCancel: () => void;
     onFormSuccess: () => void;
     canDelete: boolean;
     canEdit: boolean;
+    onOpenImage: (detection: Detection)=>void;
 }
 
 const DetectionUpsertForm = ({detection, inspectionId, geometry, 
-            onCancel, onFormSuccess, canDelete, canEdit} : DetectionUpdateFormProps) => {
+            onCancel, onFormSuccess, canDelete, canEdit, onOpenImage} : DetectionUpdateFormProps) => {
     const [actionState, action]= useActionState(
         UpsertDetection.bind(null, detection?.id, inspectionId), EMPTY_ACTION_STATE)
 
@@ -100,6 +102,37 @@ const DetectionUpsertForm = ({detection, inspectionId, geometry,
                         name="Defect_Location" 
                         value={JSON.stringify(geometry)} 
                     />
+                )}
+            {detection?.sourceImageId && (
+                    <div className="mb-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Source Image
+                            </span>
+                            {/* This badge confirms we have 2D data */}
+                            {detection.annotation2D && (
+                                <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                    Has Drawing
+                                </span>
+                            )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <div className="text-sm truncate flex-1 font-mono">
+                                {detection.sourceImageId}
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onOpenImage(detection)} // 👈 Open Modal in Edit Mode
+                                className="gap-2 h-8"
+                            >
+                                <ImageIcon className="w-3 h-3" />
+                                Edit Drawing
+                            </Button>
+                        </div>
+                    </div>
                 )}
             <div className="mb-2">
                 <Label htmlFor="Defect_Type"  

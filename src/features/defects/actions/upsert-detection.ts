@@ -15,11 +15,16 @@ import { getDefectPermissions } from '../permissions/get-defect-permissions';
 
 
 const LocationCoordinatesSchema = z.object({ x: z.number(), y: z.number(), z: z.number() });
+// Define the 2D Point Schema
+const Point2DSchema = z.object({ x: z.number(), y: z.number() });
 const LocationSchema = z.object({
-    type: z.enum(['polyline', 'polygon']),
+    type: z.enum(['polyline', 'polygon', 'point']),
     coordinates: z.array(LocationCoordinatesSchema),
     measurement: z.string().optional(),
     labelPosition: LocationCoordinatesSchema.optional(),
+
+    annotation2D: z.array(Point2DSchema).optional(),
+    sourceImageId: z.string().optional().nullable(),
 });
 
 const UpsertDetectionSchema= z.object({
@@ -89,13 +94,34 @@ const UpsertDetection = async (id: string | undefined,
             Defect_Location: formData.get("Defect_Location") || undefined,
         });
 
+        let locationOn3dModel = undefined;
+        let annotation2D = undefined;
+        let sourceImageId = undefined;
+
+        if (data.Defect_Location) {
+            // Extract 3D parts
+            locationOn3dModel = {
+                type: data.Defect_Location.type,
+                coordinates: data.Defect_Location.coordinates,
+                measurement: data.Defect_Location.measurement,
+                labelPosition: data.Defect_Location.labelPosition
+            };
+
+            // Extract 2D parts
+            annotation2D = data.Defect_Location.annotation2D;
+            sourceImageId = data.Defect_Location.sourceImageId;
+        }
+
         const dbdata= {
             type: data.Defect_Type,
             severity: data.Defect_Severity,
             status: data.Defect_Status,
             notes: data.Defect_Notes,
-            locationOn3dModel: data.Defect_Location
-        }
+            
+            locationOn3dModel: locationOn3dModel, // Save cleaned 3D JSON
+            annotation2D: annotation2D ?? undefined,       
+            sourceImageId: sourceImageId ?? undefined       
+        };
 
         await prisma.detection.upsert({
             where:{

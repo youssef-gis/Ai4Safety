@@ -19,7 +19,13 @@ const AnalysisTablePage = async ({params}:TabularAnalysisPageProps) => {
                 />
             </div>
             
-            <DefectTable inspectionId={inspectionId} />
+            <DefectTable 
+                inspectionId={inspectionId}
+                data={[]}
+                onViewDefect={() => {}}
+                canDeleteDefect={false}
+                canEditDefect={false}
+            />
         </div>
      );
 }

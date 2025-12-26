@@ -9,7 +9,7 @@ export const EmailVerificationResendForm = () => {
     const [actionState, action]= useActionState(emailVerificationResend, EMPTY_ACTION_STATE)
     return ( 
         <Form action={action} actionState={actionState} >
-            <SubmitButton label="Resend Code" />
+            <SubmitButton label="Resend Code" disabled />
         </Form>
      );
 };

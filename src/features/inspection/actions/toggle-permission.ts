@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { membershipsPath } from "@/path";
 import { getAdminOrRedirect } from "../queries/get-admin-or-redirect";
 
-type PermissionKey='canDeleteTicket';
+type PermissionKey='canDeleteDefect';
 
 export const togglePermission = async ({userId,
             organizationId,

@@ -2,6 +2,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 
 import { Project } from "@prisma/client";
 
@@ -14,6 +17,7 @@ import { Form } from "@/components/forms/form";
 
 import { DatePicker, ImperativeHandleFromDatePicker } from "@/components/date-picker";
 import { UpsertProject } from "../actions/upsert-project";
+import { projectPath, projectsPath } from "@/path";
 
 
 type ProjectUpdateFormProps = {
@@ -22,7 +26,20 @@ type ProjectUpdateFormProps = {
 
 const ProjectUpsertForm = ({project} : ProjectUpdateFormProps) => {
     const [actionState, action]= useActionState(
-        UpsertProject.bind(null, project?.id), EMPTY_ACTION_STATE)
+        UpsertProject.bind(null, project?.id), EMPTY_ACTION_STATE);
+
+    const router = useRouter();
+
+    useEffect(() => {
+    if (actionState.status === "Success") {
+        if (project?.id) {
+        router.push(projectPath(project.id));
+        } else {
+        router.push(projectsPath());
+        }
+    }
+    }, [actionState, router, project]);
+
     
     const datePickerImperativeHandleRef =useRef<ImperativeHandleFromDatePicker>(null);
 

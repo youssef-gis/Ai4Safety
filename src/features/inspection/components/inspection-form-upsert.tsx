@@ -16,9 +16,9 @@ import { Form } from "@/components/forms/form";
 import { DatePicker, ImperativeHandleFromDatePicker } from "@/components/date-picker";
 import { UpsertInspection } from "../actions/upsert-inspection";
 import { Button } from "@/components/ui/button";
-import { Attachments } from "@/features/attachments/components/attachments";
 import { ACCEPTED } from "@/features/supplements/constants";
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
+//import { randomUUID } from 'crypto'; 
 import { LucideBox, LucideCloudUpload, LucideScanLine } from "lucide-react";
 
 type InspectionUpdateFormProps = {
@@ -28,7 +28,7 @@ type InspectionUpdateFormProps = {
 }
 
 const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
-     const inspectionId = useMemo(() => uuidv4(), []);
+     const inspectionId = useMemo(() => crypto.randomUUID(), []);
 
     const [uploading, setUploading] = useState(false);
     const [s3Keys, setS3Keys] = useState<string[]>([]);

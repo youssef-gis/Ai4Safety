@@ -30,7 +30,7 @@ const SignUpForm = () => {
                 defaultValue={ actionState.payload?.get('confirmPassword') as string }/>
             <FieldErrorMsg name="confirmPassword" actionState={actionState} />
 
-            <SubmitButton label="Sign Up" />
+            <SubmitButton label="Sign Up" disabled />
         </Form>
      );
 }

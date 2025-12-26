@@ -18,29 +18,6 @@ const users = [
   },
 ];
 
-const tickets = [
-  {
-    title: "Ticket 1",
-    content: "First ticket from DB.",
-    status: "Done" as const,
-    deadline: new Date().toISOString().split("T")[0],
-    bounty: 499,
-  },
-  {
-    title: "Ticket 2",
-    content: "Second ticket from DB.",
-    status: "Open" as const,
-    deadline: new Date().toISOString().split("T")[0],
-    bounty: 399,
-  },
-  {
-    title: "Ticket 3",
-    content: "Third ticket from DB.",
-    status: "IN_PROGRESS" as const,
-    deadline: new Date().toISOString().split("T")[0],
-    bounty: 599,
-  },
-];
 
 const comments = [
   {content: 'First comment from DB'},
@@ -68,7 +45,7 @@ const seed = async () => {
     
     await prisma.comment.deleteMany();
     await prisma.user.deleteMany();
-    await prisma.ticket.deleteMany();
+    //await prisma.ticket.deleteMany();
     await prisma.organization.deleteMany();
     await prisma.membership.deleteMany();
     await prisma.project.deleteMany();
@@ -106,13 +83,13 @@ const seed = async () => {
     });
 
 
-    const dbTickets= await prisma.ticket.createManyAndReturn({
-        data: tickets.map((ticket) => ({
-        ...ticket,
-        userId: dbUsers[0].id,
-        organizationId: dbOrganization.id,
-        })),
-    });
+    // const dbTickets= await prisma.ticket.createManyAndReturn({
+    //     data: tickets.map((ticket) => ({
+    //     ...ticket,
+    //     userId: dbUsers[0].id,
+    //     organizationId: dbOrganization.id,
+    //     })),
+    // });
 
     const dbProjects= await prisma.project.createManyAndReturn({
         data: projects.map((project) => ({
@@ -123,13 +100,13 @@ const seed = async () => {
     });
 
 
-    await prisma.comment.createManyAndReturn({
-      data: comments.map((comment)=>({
-        ...comment,
-        userId:  dbUsers[1].id,
-        ticketId: dbTickets[0].id,
-      })),
-    });
+    // await prisma.comment.createManyAndReturn({
+    //   data: comments.map((comment)=>({
+    //     ...comment,
+    //     userId:  dbUsers[1].id,
+    //     ticketId: dbTickets[0].id,
+    //   })),
+    // });
 }
 
 seed()

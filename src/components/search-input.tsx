@@ -1,9 +1,6 @@
 'use client';
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Input } from "./ui/input";
 import {useDebouncedCallback} from 'use-debounce' ; 
-import { searchParser } from "@/features/ticket/search-params";
-import {useQueryState} from 'nuqs';
 
 type SearchInputProps={
     placeholder: string;

@@ -83,6 +83,7 @@ import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect
 import { getProject } from "@/features/project/queries/get-project";
 import { getInspectionPermissions } from "@/features/inspection/permissions/get-inspection-permissions";
 import { toActionState } from "@/components/forms/utils/to-action-state";
+import notFound from "./not-found";
 
 // --- MOCK DATA GENERATOR (For UI Dev) ---
 const MOCK_STATS: ProjectStatsType = {
@@ -117,7 +118,15 @@ export default  async  function ProjectPage({ params }: { params: Promise<{ proj
         organizationId: activeOrganization.id
      });
 
-    const project= await getProject(projectId);
+    const projectResult = await getProject(projectId);
+
+    // Handle null or ActionState (error) cases
+    if (!projectResult || !('name' in projectResult)) {
+        return notFound();
+    }
+
+    // Now TypeScript knows projectResult has 'name' property
+    const project = projectResult;
     if(!project) return null
     // When DB is populated, uncomment this and remove MOCK_DATA
     // const { chartData, kpi } = await getProjectAnalytics(projectId);

@@ -17,7 +17,7 @@ export const PasswordForgotForm = () => {
                 defaultValue={ actionState.payload?.get('email') as string } />
             <FieldErrorMsg name="email" actionState={actionState} />
 
-            <SubmitButton label="Send Email" />
+            <SubmitButton label="Send Email"  disabled={false}/>
         </Form>
      );
 }
