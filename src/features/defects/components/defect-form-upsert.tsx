@@ -14,12 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { AlertTriangle, ImageIcon, X } from 'lucide-react';
+import { AlertTriangle, ImageIcon, X, CloudUpload } from 'lucide-react';
 
 import { Detection } from "@prisma/client";
 
 import { SubmitButton } from "@/components/forms/submit-buttton";
-import { useActionState, useRef, useTransition } from "react";
+import { useActionState, useMemo, useRef, useState, useTransition } from "react";
 import { FieldErrorMsg } from "@/components/forms/field-error";
 import { EMPTY_ACTION_STATE } from "@/components/forms/utils/to-action-state";
 
@@ -30,11 +30,13 @@ import { UpsertDetection } from "../actions/upsert-detection";
 import { Button } from "@/components/ui/button";
 import { deleteDefect } from "../actions/delete-detection";
 import { cn } from "@/lib/utils";
+import { ACCEPTED } from "@/features/supplements/constants";
 
 
 
 type DetectionUpdateFormProps = {
     detection?: Detection;
+    projectId: string;
     inspectionId: string;
     geometry?: { type: 'polyline' | 'polygon' | 'point'; coordinates: {x: number, y: number, z: number}[], 
                 measurement?: string; labelPosition?: {x: number, y: number, z: number}; 
@@ -47,17 +49,79 @@ type DetectionUpdateFormProps = {
     onOpenImage: (detection: Detection)=>void;
 }
 
-const DetectionUpsertForm = ({detection, inspectionId, geometry, 
+const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry, 
             onCancel, onFormSuccess, canDelete, canEdit, onOpenImage} : DetectionUpdateFormProps) => {
+    // 1. Memoize ID: Use existing ID or generate a new UUID for uploads
+    const defectId = useMemo(() => detection?.id || crypto.randomUUID(), [detection]);
+
+    const [uploading, setUploading] = useState(false);
+    const [s3Keys, setS3Keys] = useState<string[]>([]);
+
     const [actionState, action]= useActionState(
-        UpsertDetection.bind(null, detection?.id, inspectionId), EMPTY_ACTION_STATE)
+        UpsertDetection.bind(null, defectId, projectId, inspectionId, s3Keys), EMPTY_ACTION_STATE)
 
     const [isDeleting, startDeleteTransition] = useTransition();
     
     //const datePickerImperativeHandleRef =useRef<ImperativeHandleFromDatePicker>(null);
 
+    // 3. Handle File Upload (Similar to InspectionUpsertForm)
+    async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading(true);
+        const uploadedKeys: string[] = [];
+
+        for (const file of Array.from(files)) {
+            // Ask backend for a presigned URL
+            const presignRes = await fetch("/api/aws/s3/supplements/presign-upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    filename: file.name, 
+                    contentType: file.type, 
+                    projectId: projectId, 
+                    entity: 'DETECTION', 
+                    entityId: defectId,
+                    inspectionId: inspectionId
+                }),
+            });
+
+            if (!presignRes.ok) {
+                console.error("Failed to get presigned URL");
+                continue;
+            }
+
+            const { url, fields } = await presignRes.json();
+
+            // Build FormData for S3
+            const formData = new FormData();
+            Object.entries(fields).forEach(([key, value]) => {
+                formData.append(key, value as string);
+            });
+            formData.append("file", file);
+
+            // Upload directly to S3
+            const uploadRes = await fetch(url, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (uploadRes.ok) {
+                uploadedKeys.push(fields.key);
+            } else {
+                console.error("Failed to upload file:", file.name);
+            }
+        }
+
+        // Add new keys to existing ones (if any)
+        setS3Keys(prev => [...prev, ...uploadedKeys]);
+        setUploading(false);
+    }
+
     const handleSuccess = () => {
         //datePickerImperativeHandleRef.current?.reset();
+        setS3Keys([]);
         onFormSuccess();
     }; 
 
@@ -191,6 +255,39 @@ const DetectionUpsertForm = ({detection, inspectionId, geometry,
                 <Textarea id='Defect_Notes' name='Defect_Notes' 
                     defaultValue={ (actionState.payload?.get('Defect_Notes') as string ) ?? detection?.notes} 
                     className="w-full p-2 border border-gray-300 rounded-md " rows={2}></Textarea>
+            </div>
+
+            {/* --- NEW FILE UPLOAD SECTION --- */}
+            <div className="mb-4">
+                <Label className="block text-sm font-medium mb-1">Attachments</Label>
+                <div className="border border-dashed border-input rounded-md p-4 text-center hover:bg-accent/50 transition-colors relative">
+                    <input
+                        type="file"
+                        multiple
+                        accept={ACCEPTED.join(",")}
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploading}
+                    />
+                    <div className="flex flex-col items-center gap-1">
+                        <CloudUpload className="w-5 h-5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                            {uploading ? "Uploading..." : "Click or drag to attach files"}
+                        </span>
+                    </div>
+                </div>
+                
+                {/* Visual feedback for selected/uploaded files */}
+                {s3Keys.length > 0 && (
+                    <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        {s3Keys.length} file(s) ready to save
+                    </div>
+                )}
+
+                {/* Existing attachments list could go here if we fetch them */}
+                
+                <FieldErrorMsg actionState={actionState} name="files" />
             </div>
 
             <div className={cn(

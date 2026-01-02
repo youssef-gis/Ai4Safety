@@ -30,7 +30,7 @@ export default async function ProjectsPage({searchParams}: ProjectsPageProps) {
                       organizationId: activeOrganization.id
   });
 
-  console.log('permissions Projects', permissions)
+  //console.log('permissions Projects', permissions)
 
   // const isAdmin = activeOrganization?.membershipByUser.membershipRole ===  'ADMIN';
   return (

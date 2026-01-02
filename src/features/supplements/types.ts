@@ -15,6 +15,28 @@ type AttachmentSubjectInspection = Prisma.InspectionGetPayload<{
   }
 }>;
 
+type AttachmentSubjectDetection = Prisma.DetectionGetPayload<{
+  select: {
+    id: true;
+    sourceImageId: true;
+  };
+  include:{
+    analysis:{
+      include:{
+        inspection:{
+          include:{
+            project:{
+              select:{
+                organizationId: true;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}>;
+
 type AttachmentSubjectAnalysis = Prisma.AnalysisGetPayload<{
   select: {
     id: true;
@@ -54,12 +76,19 @@ type AttachmentSubjectComment = Prisma.CommentGetPayload<{
 export type AttachmentSubject =
   | AttachmentSubjectInspection
   | AttachmentSubjectAnalysis
-  | AttachmentSubjectComment;
+  | AttachmentSubjectComment
+  | AttachmentSubjectDetection;
 
 export const isInspection = (
   subject: AttachmentSubject
 ): subject is AttachmentSubjectInspection => {
   return "projectId" in subject  && "project" in subject;
+};
+
+export const isDetection = (
+  subject: AttachmentSubject
+): subject is AttachmentSubjectDetection => {
+  return "analysis" in subject;
 };
 
 export const isAnalysis = (

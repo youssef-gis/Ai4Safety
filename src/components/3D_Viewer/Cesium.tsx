@@ -361,9 +361,9 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                         
                         // C. Get the URL
                         const filename = bestCamera.properties?.getValue(CesiumJs.JulianDate.now()).filename;
-                        if (proxyBaseUrl && filename) {
-                            setSelectedImage(`${proxyBaseUrl}/${filename}`);
-                        }
+                        // if (proxyBaseUrl && filename) {
+                        //     setSelectedImage(`${proxyBaseUrl}/${filename}`);
+                        // }
 
                         // D. Highlight it visually (Optional)
                         bestCamera.billboard!.color = new CesiumJs.ConstantProperty(CesiumJs.Color.LIME);
@@ -374,13 +374,32 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                     } else {
                         console.log("No suitable camera found for this location.");
                     }
+                
+                // This triggers the "Draft Mode"
+                if (onDefectDetected) {
+                    const draftCandidate: DefectCandidate = {
+                        positions: [pickedPosition],
+                        type: 'point',
+                        measurement: 'Point',
+                        labelPosition: pickedPosition,
+                        // Optional: Pass pre-calculated data
+                        locationOn3dModel: { 
+                            type: 'point', 
+                            coordinates: [{ x: pickedPosition.x, y: pickedPosition.y, z: pickedPosition.z }] 
+                        }
+                    };
+                    
+                    // We pass [] for entities because we aren't using the Drawing Manager's temp shapes
+                    onDefectDetected(draftCandidate, []);
+                    }
                 }
+
             }
 
         }, CesiumJs.ScreenSpaceEventType.LEFT_CLICK);
 
         return () => handler.destroy();
-    }, [CesiumJs, drawingMode, viewerReady, proxyBaseUrl, onDefectSelected]);
+    }, [CesiumJs, drawingMode, viewerReady, proxyBaseUrl, onDefectSelected, onDefectDetected]);
 
     // Reset highlight when image is closed
     useEffect(() => {
@@ -473,6 +492,12 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
         
         const viewer = new CesiumJs.Viewer(cesiumContainerRef.current, {
             creditContainer: document.createElement("div"),
+        
+            // ADD THESE LINES TO FIX THE OVERLAP:
+            navigationHelpButton: false, // Hides the "?" button
+            sceneModePicker: false,      // Hides the 2D/3D toggle (optional)
+            //baseLayerPicker: false,      // Hides the map layer picker (since you have a custom one)
+
             geocoder: false,
             imageryProviderViewModels: imageryViewModels,
             selectedImageryProviderViewModel: imageryViewModels[0],
@@ -698,7 +723,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
             setTemp3DLocation(null);
         };
     
-        useEffect(() => {
+    useEffect(() => {
             if (defectToEditImage && defectToEditImage.sourceImageId) {
                 console.log("Opening Image for Edit:", defectToEditImage.sourceImageId);
                 
@@ -1024,9 +1049,9 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                     toggleAllDefects={onToggleAllDefects}
                 />
                 
-                <div className="h-px w-full bg-border my-1" />
+                {/* <div className="h-px w-full bg-border my-1" /> */}
 
-                <Button
+                {/* <Button
                     onClick={() => startDrawing('none')}
                     variant={drawingMode === 'none' ? 'default' : 'outline'}
                     size="sm"
@@ -1056,7 +1081,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                     size="sm"
                 >
                     <Trash2 className="w-4 h-4" />
-                </Button>
+                </Button> */}
 
             </div>
 
@@ -1066,10 +1091,10 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 {/* Search & Primary Actions */}
                 <div className="flex items-center gap-2">
                     {/* The Search Bar (Expands to the left) */}
-                    <DefectSearch 
+                    {/* <DefectSearch 
                         defects={initialDetections} 
                         onSelectDefect={handleSearchSelect} 
-                    />
+                    /> */}
                   
                     {/* <Button variant="secondary" size="icon" className="shadow-md">
                         <Settings className="h-4 w-4" />
@@ -1104,13 +1129,13 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
             </div>)
         }
 
-            <Button
+            {/* <Button
                 onClick={onFullscreenToggle}
                 className="absolute bottom-4 right-4 z-10 rounded-full shadow-md"
                 size="icon"
             >
                 <LucideFullscreen className="w-4 h-4" />
-            </Button>
+            </Button> */}
         </div>
     );
 };

@@ -28,7 +28,11 @@ export const getAnalysis = async(inspectionId:string ) => {
         },
         include: {
             job:true,
-            detections: true,
+            detections: {
+                include:{
+                    attachments: true
+                }
+            },
             inspection:{
                 select:{
                     title:true,

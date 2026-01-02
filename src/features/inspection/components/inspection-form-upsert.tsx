@@ -34,7 +34,8 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
     const [s3Keys, setS3Keys] = useState<string[]>([]);
 
     const [actionState, action]= useActionState(
-        UpsertInspection.bind(null, projectId, inspectionId , s3Keys), EMPTY_ACTION_STATE)
+        UpsertInspection.bind(null, projectId, inspectionId , s3Keys), 
+        EMPTY_ACTION_STATE)
     const [fileCount, setFileCount] = useState(0);
     
 

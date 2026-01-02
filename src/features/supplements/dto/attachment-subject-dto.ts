@@ -1,5 +1,5 @@
 import { SupplementEntity } from "@prisma/client";
-import { AttachmentSubject, isComment, isInspection, isAnalysis } from "../types";
+import { AttachmentSubject, isComment, isInspection, isAnalysis, isDetection } from "../types";
 
 export type Type = {
   entityId: string;
@@ -41,8 +41,35 @@ export const fromAnalysis = (analysis: AttachmentSubject | null) => {
     jobId: analysis.jobId,
     organizationId: analysis.inspection.project.organizationId,
     userId: analysis.inspection.conductedByUserId,
-    // conductedByUserId: inspection.conductedByUserId,
+    // conductedByUserId: inspection.conductedByUserId,-()
     // inspectionId: inspection.id,
+    commentId: null,
+  };
+};
+
+export const fromDetection = (detection: AttachmentSubject | null) => {
+  if (!detection || !isDetection(detection)) {
+    return null;
+  }
+// Traverse the relationship chain
+  const analysis = detection.analysis;
+  const inspection = analysis?.inspection;
+  const project = inspection?.project;
+
+  if (!analysis || !inspection || !project) return null;
+
+  return {
+    entity: "DETECTION" as SupplementEntity,
+    entityId: detection.id,
+    
+
+    
+    projectId: inspection.projectId,
+    inspectionId: inspection.id,
+    organizationId: project.organizationId,
+
+    userId: inspection.conductedByUserId, 
+    
     commentId: null,
   };
 };

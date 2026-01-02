@@ -51,6 +51,7 @@ export const createAttachments = async ({
           Key: generateS3Key({
             organizationId: subject.organizationId,
             projectId: subject.projectId,
+            inspectionId: subject.inspectionId,
             entityId,
             entity,
             fileName: file.name,

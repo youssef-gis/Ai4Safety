@@ -50,7 +50,7 @@ export async function GET(
   //const s3Key = `organizations/${organizationId}/projects/${projectId}/INSPECTION/${inspectionId}/assets/unzipped_assets/${relativePath}`;
   const s3Key = `organizations/${organizationId}/projects/${projectId}/INSPECTION/${inspectionId}/${subFolder}${filename}`;
 
-  console.log("Generatign Tile Proxy for:", s3Key); 
+  //console.log("Generatign Tile Proxy for:", s3Key); 
 
   try {
     const command = new GetObjectCommand({
@@ -63,7 +63,7 @@ export async function GET(
     return NextResponse.redirect(signedUrl);
 
   } catch (error) {
-    console.error("Tile error:", error);
+    //console.error("Tile error:", error);
     return new NextResponse("Error generating tile URL", { status: 500 });
   }
 }

@@ -19,11 +19,14 @@ type AnalaysisProps= {
   focusedDefectId?: string | null;
   canDeleteDefect: boolean;
   canEditDefect: boolean;
+  onDefectSelected?: (defect: Detection) => void;
   layers: MapLayer[];
+  onDefectDetected?: (candidate: DefectCandidate, tempEntities: any[])=> void;
 }
 
 export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectionId, initialDetections,
-     focusedDefectId, canDeleteDefect, canEditDefect, layers }: AnalaysisProps) => {
+     focusedDefectId, canDeleteDefect, 
+     canEditDefect, onDefectSelected,layers, onDefectDetected }: AnalaysisProps) => {
     const router = useRouter();
     
     const [defectCandidate, setDefectCandidate] = useState<DefectCandidate | null>(null);
@@ -37,14 +40,27 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
     };
 
     const handleDefectDetected = (candidate: DefectCandidate, entities: Entity[]) => {
-        setDefectCandidate(candidate);
-        setTempEntities(entities);
+        //setDefectCandidate(candidate);
+        
+        //setTempEntities(entities);
+        if (onDefectDetected) {
+            onDefectDetected(candidate, []);
+        }
         setEditingDefect(null); 
     };
 
     const handleDefectSelected = (defect: Detection) => {
-        setEditingDefect(defect);
-        setDefectCandidate(null); 
+            if (onDefectSelected) {
+                // New Architecture: Notify parent to open the Side Panel
+                onDefectSelected(defect);
+                
+                // We clear the local editingDefect so we don't show the duplicate floating form
+                setEditingDefect(null);
+            } else {
+                // Old Architecture: Show floating form inside viewer (fallback)
+                setEditingDefect(defect);
+            }
+            setDefectCandidate(null); 
     };
 
     const handleFormSuccess = () => {
@@ -76,15 +92,18 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
                 focusedDefectId={focusedDefectId}
                 layers={layers}
                 defectToEditImage={defectToEditImage}
-                onCloseImageEdit={() => setDefectToEditImage(null)} showTileset={false} showDefects={false} onToggleTileset={function (): void {
+                onCloseImageEdit={() => setDefectToEditImage(null)} showTileset={false} showDefects={false} 
+                onToggleTileset={function (): void {
                     throw new Error("Function not implemented.");
-                } } onToggleDefects={function (): void {
+                } } 
+                onToggleDefects={function (): void {
                     throw new Error("Function not implemented.");
-                } }                >
+                } }                
+                >
                 {/* Children rendered INSIDE the fullscreen div */}
                 
                 {/* Form for CREATING a new defect */}
-                {defectCandidate && (
+                 {/* {defectCandidate && (
                     // Added 'pointer-events-auto' to ensure interactions work if parent has 'pointer-events-none'
                     <div className={formContainerStyle}>
                         <div className="p-4 overflow-y-auto flex-1 overscroll-contain">
@@ -114,10 +133,10 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
                             />
                         </div>
                     </div>
-                )}
+                )} */}
 
                 {/* Form for EDITING an existing defect */}
-                {editingDefect && (
+                {/* {editingDefect && !onDefectSelected && (
                     <div className={formContainerStyle}>
                         <div className="p-4 overflow-y-auto flex-1 overscroll-contain">
                             <DetectionUpsertForm
@@ -131,7 +150,7 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
                             />
                         </div>
                     </div>
-                )}
+                )}  */}
             </CesiumWrapper>
         </div>
     )

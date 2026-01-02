@@ -14,7 +14,7 @@ const ProfilePage = async () => {
     } ;
 
     const userData = await getUserProfile(user.id);
-    console.log('userData profile page', userData);
+    //console.log('userData profile page', userData);
     if(!userData){
         return toActionState('Error', 'User not found');
     }

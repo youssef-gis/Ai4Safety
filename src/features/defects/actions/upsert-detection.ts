@@ -9,6 +9,7 @@ import {toCent} from "@/utils/currency"
 import {z} from 'zod';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-rerdirect';
 import { IsOwner } from '@/features/auth/utils/is-owner';
+import * as attachmentData from "@/features/supplements/data";
 import { DetectionType, DetectionSeverity, DetectionStatus } from '@prisma/client';
 import { getAnalysis } from '@/features/analysis/actions/get-analysis';
 import { getDefectPermissions } from '../permissions/get-defect-permissions';
@@ -39,8 +40,10 @@ const UpsertDetectionSchema= z.object({
 });
 
 
-const UpsertDetection = async (id: string | undefined,
+const UpsertDetection = async (id: string ,
+    projectId: string,
     inspectionId: string,
+    filesKeys: string[],
     _actionStat:ActionState,
     formData: FormData) =>{
     const {user, activeOrganization}= await getAuthOrRedirect();
@@ -55,37 +58,26 @@ const UpsertDetection = async (id: string | undefined,
         return toActionState('Error', 'Analysis not found or not authorized.');
     };
 
-    try{
-
-        if(id){
-            
-            const permissions = await getDefectPermissions({
+    try{ 
+        const permissions = await getDefectPermissions({
                 userId: user.id,
                 organizationId: activeOrganization.id
-            });
+        });
     
+        // Check if updating an existing record
+        const existingDefect = await prisma.detection.findUnique({ where: { id } });
+
+        if (existingDefect) {
             if (!permissions.canEditDefect) {
                 return toActionState('Error', 'You do not have permission to edit defects.');
             }
-            
-            const detection = await prisma.detection.findFirst({
-                 where: {
-                     id,
-                     analysis: {
-                         inspection: {
-                             project: {
-                                 organizationId: activeOrganization.id
-                             }
-                         }
-                     }
-                 }
-                 
-             });
-
-            if(!detection){
-                return toActionState('Error', 'Not authorized to edit this defect.');
+        } else {
+           
+            if (!permissions.canEditDefect) {
+                return toActionState('Error', 'You do not have permission to create defects.');
             }
         }
+        
         const data= UpsertDetectionSchema.parse({
             Defect_Type: formData.get('Defect_Type') ,
             Defect_Severity: formData.get('Defect_Severity') ,
@@ -113,6 +105,7 @@ const UpsertDetection = async (id: string | undefined,
         }
 
         const dbdata= {
+            id: id,
             type: data.Defect_Type,
             severity: data.Defect_Severity,
             status: data.Defect_Status,
@@ -125,12 +118,40 @@ const UpsertDetection = async (id: string | undefined,
 
         await prisma.detection.upsert({
             where:{
-                id: id || ""
+                id: id 
             },
             update: dbdata,
             create: {...dbdata, analysisId: analysis.id,},
-
         });
+
+        if (filesKeys && filesKeys.length > 0) {
+            for (const key of filesKeys) {
+                const name = key.split("/").pop() ?? "attachment";
+                
+                console.log("--- Attempting to create attachment ---");
+                console.log("Key:", key);
+                console.log("Linking to Defect ID:", id);
+
+                try {
+                    // Log the result of the creation
+                    const newRecord = await attachmentData.createAttachment({
+                        name: name,
+                        entity: "DETECTION",
+                        entityId: id,
+                        url: key
+                    });
+                    
+                    console.log("✅ DB Record Created:", newRecord);
+                    
+                    if (!newRecord.detectionId) {
+                        console.error("⚠️ WARNING: Record created but detectionId is NULL. Check create-attachment.ts mapping.");
+                    }
+                } catch (dbError) {
+                    console.error("❌ Database Error:", dbError);
+                }
+            }
+        }
+
     }catch (error){
         return formErrorToActionState(error, formData);
     }
@@ -143,7 +164,7 @@ const UpsertDetection = async (id: string | undefined,
         //redirect(ticketPath(id));
     }
   
-    return toActionState('Success', id ? 'Defect Updated' : 'Defect Created')
+    return toActionState('Success',  'Defect Saved')
 };
 
 export {UpsertDetection};

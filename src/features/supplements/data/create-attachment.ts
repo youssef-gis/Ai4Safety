@@ -21,6 +21,7 @@ export const createAttachment = async ({
       ...(entity === "INSPECTION" ? { inspectionId: entityId } : {}),
       ...(entity === "ANALYSIS" ? { analysisId: entityId } : {}),
       ...(entity === "COMMENT" ? { commentId: entityId } : {}),
+      ...(entity === "DETECTION" ? { detectionId: entityId } : {}),
       entity,
       url
     },

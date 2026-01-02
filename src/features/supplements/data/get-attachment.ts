@@ -15,6 +15,23 @@ export const getAttachment = async (id: string) => {
           }
         }
       },
+      detection:{
+        include:{
+          analysis:{
+            include:{
+              inspection:{
+                include:{
+                  project:{
+                    select:{
+                      organizationId:true,
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       analysis: {
         include:{
           inspection:{

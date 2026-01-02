@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         handleSubscriptionDeleted(event.data.object, event.created);
         break;
       default:
-        console.log(`Unhandled event type ${event.type}.`);
+       // console.log(`Unhandled event type ${event.type}.`);
     }
 
     return new NextResponse(null, { status: 200 });

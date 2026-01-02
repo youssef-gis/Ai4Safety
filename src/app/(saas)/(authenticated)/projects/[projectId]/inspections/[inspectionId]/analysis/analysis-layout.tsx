@@ -1,45 +1,27 @@
 "use client"
 
 import { useRef, useState } from "react";
-import { ImperativePanelHandle } from "react-resizable-panels";
-import { 
-  ResizableHandle, 
-  ResizablePanel, 
-  ResizablePanelGroup 
-} from "@/components/ui/resizable";
-
 import { Analysis3DViewer } from "@/features/analysis/components/analysis_3d_viewer";
-import DefectTable from "@/features/defects/defect-table";
-import { Detection, DetectionSeverity, DetectionStatus, DetectionType } from "@prisma/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InspectionAnalytics } from "@/features/analysis/components/inspection-analytics";
+import { InspectorPanel } from "@/features/analysis/components/inspector-panel";
+import { AnalyticsDrawer } from "@/features/analysis/components/analytics-drawer";
+import { Detection } from "@prisma/client";
 import { MapLayer } from "@/components/3D_Viewer/types/map";
-
-type DetectionWithNulls = {
-    id: string;
-    type: DetectionType | null;
-    status: DetectionStatus | null;
-    severity: DetectionSeverity | null;
-    createdAt: Date;
-    confidenceScore: number | null;
-    notes: string | null;
-    locationOn3dModel: any | null;
-    annotation2D: any | null;
-    sourceImageId: string | null;
-    analysisId: string;
-    description:  string | null ; 
-    location: any ; 
-    confidence: number | null ;
-    imageUrl: string | null ;
-    canDeleteDefect: ()=>void;
-    canEditDefect: ()=>void;
-};
+import { Button } from "@/components/ui/button";
+import { 
+  BarChart3, 
+  Maximize2, 
+  Minimize2, 
+  PanelRightOpen, 
+  PanelRightClose 
+} from "lucide-react"; 
+import { cn } from "@/lib/utils";
+import { Defect } from "@/features/defects/columns";
 
 interface AnalysisLayoutProps {
   projectId: string;
   inspectionId: string;
   camerasUrl: string;
-  proxyBaseUrl:string;
+  proxyBaseUrl: string;
   tilesetUrl: string;
   layers: MapLayer[];
   initialDetections: Detection[];
@@ -52,101 +34,179 @@ export function AnalysisLayout({
   proxyBaseUrl,
   tilesetUrl,
   layers,
+  projectId,
   inspectionId,
   initialDetections,
   canDeleteDefect,
   canEditDefect
 }: AnalysisLayoutProps) {
   
-  console.log('Cameras Url ', camerasUrl);
-  // Refs to control panel sizes
-  const mapPanelRef = useRef<ImperativePanelHandle>(null);
-  const tablePanelRef = useRef<ImperativePanelHandle>(null);
-  
-  // State for the "Fly To" logic
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false); 
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusedDefectId, setFocusedDefectId] = useState<string | null>(null);
 
-  // The "Focus Mode" Handler
-  const handleViewDefect = (id: string) => {
-    setFocusedDefectId(id); // Triggers Cesium FlyTo
+  const [draftDefect, setDraftDefect] = useState<{ position: {x:number, y:number, z:number} } | null>(null);
 
-    // Resize Panels: Map 75%, Table 25%
-    if (mapPanelRef.current && tablePanelRef.current) {
-      mapPanelRef.current.resize(75);
-      tablePanelRef.current.resize(25);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
-  // const defects: Detection[] = initialDetections
-  // .filter((d): d is Detection & { type: DetectionType } => d.type !== null);
-  const tableData = initialDetections.map(d => ({
-    id: d.id,
-    type: d.type,
-    severity: d.severity,
-    status: d.status,
-  }));
-  return (
-    <ResizablePanelGroup direction="vertical" className="h-full w-full">
+// Handler for when user clicks the 3D model
+  const handleDraftCreated = (data: { positions: any[] }) => {
+      // 1. Extract the position (assuming single point for now)
+      const position = data.positions[0]; 
       
-      {/* Top PANEL: 3D VIEWER */}
-      <ResizablePanel 
-        ref={mapPanelRef} 
-        defaultSize={60} 
-        minSize={30}
-        className="relative"
-      >
-        {/* We pass focusedDefectId down to Cesium wrapper */}
+      // 2. Set draft state
+      setDraftDefect({ position: { x: position.x, y: position.y, z: position.z } });
+      
+      // 3. Open the inspector
+      setIsInspectorOpen(true);
+      
+      // 4. Clear any focused existing defect so we don't show that
+      setFocusedDefectId(null);
+  };
+
+  const handleDefectSelect = (id: string | null) => {
+      if (id) setDraftDefect(null);
+      setFocusedDefectId(id);
+      if (id) setIsInspectorOpen(true);
+  };
+
+  // Close handler needs to clear draft too
+  const handleCloseInspector = () => {
+      setIsInspectorOpen(false);
+      setDraftDefect(null);
+      setFocusedDefectId(null);
+  };
+
+  return (
+    <div 
+      ref={containerRef} 
+      className="relative h-full w-full overflow-hidden bg-black group"
+    >
+      
+      {/* 1. LAYER A: 3D VIEWER (BACKGROUND) */}
+      <div className="absolute inset-0 z-0">
         <Analysis3DViewer 
-          tilesetUrl={tilesetUrl}
-          camerasUrl={camerasUrl}
-          proxyBaseUrl={proxyBaseUrl}
-          layers={layers}
-          inspectionId={inspectionId}
-          initialDetections={initialDetections}
-          focusedDefectId={focusedDefectId} 
-          canDeleteDefect={canDeleteDefect}
-          canEditDefect= {canEditDefect}
+            tilesetUrl={tilesetUrl}
+            camerasUrl={camerasUrl}
+            proxyBaseUrl={proxyBaseUrl}
+            layers={layers}
+            inspectionId={inspectionId}
+            initialDetections={initialDetections}
+            focusedDefectId={focusedDefectId} 
+            canDeleteDefect={canDeleteDefect}
+            canEditDefect={canEditDefect}
+            onDefectSelected={(defect) => handleDefectSelect(defect.id)}
+            onDefectDetected={(candidate: any) => handleDraftCreated(candidate)}
         />
-      </ResizablePanel>
+      </div>
 
-      <ResizableHandle withHandle className="bg-border/70 h-2" />
+      {/* 2. LAYER B: FLOATING HUD (The "Command Bar") */}
 
-      {/* BUTTOM PANEL: TABLE */}
-      <ResizablePanel 
-        ref={tablePanelRef} 
-        defaultSize={40} 
-        minSize={10}
-        className="bg-transparent"
+      {/* BOTTOM RIGHT: Main Action Bar */}
+      <div className={cn(
+          "absolute bottom-6 right-6 z-20 flex items-center p-1.5 gap-2 rounded-xl transition-all duration-300",
+          "bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl", 
+          isInspectorOpen ? "translate-x-[-384px] md:translate-x-[-400px]" : "translate-x-0"
+      )}>
+        
+        {/* Analytics Toggle */}
+        <Button 
+            variant={isAnalyticsOpen ? "secondary" : "outline"} 
+            size="sm" 
+            onClick={() => setIsAnalyticsOpen(!isAnalyticsOpen)}
+            className={cn(
+            "text-black hover:bg-white/10",
+            isAnalyticsOpen && "bg-white/20"
+        )}
+        >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Analytics
+        </Button>
+
+        {/* Vertical Separator */}
+        <div className="h-4 w-px bg-white/20" />
+
+        {/* Inspector Toggle (Primary Blue Button) */}
+        <Button 
+            variant={isInspectorOpen ? "secondary" : "default"} 
+            size="sm" 
+            className={cn(
+                        "shadow-none transition-all",
+                        !isInspectorOpen && "bg-blue-600 hover:bg-blue-700 text-white border-none"
+                    )}
+            onClick={() => setIsInspectorOpen(!isInspectorOpen)}
+        >
+            {isInspectorOpen ? (
+                <>
+                <PanelRightClose className="w-4 h-4 mr-2" />
+                Close Panel
+                </>
+            ) : (
+                <>
+                <PanelRightOpen className="w-4 h-4 mr-2" />
+                Inspector Panel
+                </>
+            )}
+        </Button>
+        {/* Vertical Separator */}
+        <div className="h-4 w-px bg-white/20 mx-1" />
+
+        {/* 3. Fullscreen Toggle (Icon Only) */}
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleFullscreen}
+            className="h-9 w-9 text-white hover:bg-white/10 rounded-lg"
+            title="Toggle Fullscreen"
+        >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* 3. LAYER C: INSPECTOR PANEL (SLIDE IN FROM RIGHT) */}
+      <div 
+        className={cn(
+          "absolute top-0 right-0 h-full z-30 transition-transform duration-300 ease-in-out shadow-2xl border-l border-border/50 bg-background",
+          "w-full md:w-[400px]", 
+          isInspectorOpen ? "translate-x-0" : "translate-x-full"
+      )}
+        //style={{ width: '400px' }} // Fixed width matching mockup
       >
-        <Tabs defaultValue="table" className="h-full flex flex-col">
-            <div className="flex items-center justify-between px-4 pt-2 border-b">
-                <TabsList className="h-8">
-                    <TabsTrigger value="table" className="text-xs">Defect Log</TabsTrigger>
-                    <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
-                </TabsList>
-            </div>
+        {/* Render content only when needed or keep mounted for state preservation */}
+        <InspectorPanel 
+            inspectionId={inspectionId}
+            projectId={projectId}
+            defects={initialDetections}
+            focusedDefectId={focusedDefectId}
+            onSelectDefect={handleDefectSelect}
+            onClose={handleCloseInspector}
+            draftDefect={draftDefect}
+            camerasUrl={camerasUrl}
+            proxyBaseUrl={proxyBaseUrl}
+            canDeleteDefect={canDeleteDefect}
+            canEditDefect={canEditDefect}
+            
+        />
+      </div>
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-hidden">
-                <TabsContent value="table" className="h-full w-full p-0 m-0 overflow-auto">
-                    <div className="p-4">
-                        <DefectTable 
-                            data={tableData} 
-                            onViewDefect={handleViewDefect}
-                            canDeleteDefect={canDeleteDefect} 
-                            canEditDefect= {canEditDefect}
-                            inspectionId={inspectionId} 
-                        />
-                    </div>
-                </TabsContent>
-                
-                <TabsContent value="analytics" className="h-full w-full p-0 m-0 overflow-auto">
-                    <InspectionAnalytics />
-                </TabsContent>
-            </div>
-        </Tabs>
-      </ResizablePanel>
+      {/* 4. LAYER D: ANALYTICS DRAWER (SLIDE UP FROM BOTTOM) */}
+      <AnalyticsDrawer 
+          isOpen={isAnalyticsOpen} 
+          onClose={() => setIsAnalyticsOpen(false)} 
+          detections={initialDetections}
+      />
 
-    </ResizablePanelGroup>
+    </div>
   );
 }

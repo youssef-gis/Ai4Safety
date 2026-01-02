@@ -339,8 +339,13 @@ model Detection {
   annotation2D     Json?
   sourceImageId    String?
   
+  referencedDetections Detection[] @relation("DetectionReferences")
+  referencingDetections Detection[] @relation("DetectionReferences")
+
   // Foreign Keys
   analysisId        String
+
+  attachments     Supplement[]      @relation("DetectionAttachments")
 
   // Relations
   analysis          Analysis          @relation(fields: [analysisId], references: [id], onDelete: Cascade)
@@ -393,11 +398,16 @@ model Supplement {
 
   comment   Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId String?
+
+  detection   Detection? @relation("DetectionAttachments", fields: [detectionId], references: [id], onDelete: Cascade)
+  detectionId String?
+
   detections   DetectionOnImage[]
 
   @@index([inspectionId])
   @@index([analysisId])
   @@index([commentId])
+  @@index([detectionId])
 
 }
 
@@ -408,12 +418,15 @@ model Supplement {
    THREE_D_MODEL
    INSPECTION_REPORT
    THERMAL_MAP
+   AUDIO_NOTE
+   EXPERT_FILE
  }
 
 enum SupplementEntity {
   INSPECTION
   ANALYSIS
   COMMENT
+  DETECTION
 }
 
 enum JobStatus {

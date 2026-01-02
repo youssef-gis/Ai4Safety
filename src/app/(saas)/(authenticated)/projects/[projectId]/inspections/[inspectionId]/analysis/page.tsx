@@ -38,9 +38,9 @@ export default async function AnalysisPage({ params }: PageProps) {
 
   // Fetch Analysis (Tileset + Detections)
   const analysis = await getAnalysis(inspectionId);
-  console.log('Inspection ID:', inspectionId);
-  console.log('Project ID:', projectId);
-  console.log('Analysis Data:', analysis);
+  //console.log('Inspection ID:', inspectionId);
+  //console.log('Project ID:', projectId);
+  //console.log('Analysis Data:', analysis);
 
 
   //const tilesetUrl = "/model/tileset.json"; // Or from analysis object

@@ -48,7 +48,30 @@ export const getAttachmentSubject = async (
 
       return attachmentSubjectDTO.fromAnalysis(analysis);
     }
-  
+    case "DETECTION": {
+          const detection = await prisma.detection.findUnique({
+            where: { id: entityId },
+            include: {
+              analysis: {
+                include: {
+                  inspection: {
+                    include: {
+                      project: {
+                        select: { organizationId: true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          });
+
+          if (!detection) return null;
+          
+          // We need to cast or ensure the import handles the deep type
+          // but usually the DTO function handles the structural mapping
+          return attachmentSubjectDTO.fromDetection(detection);
+        }  
     case "COMMENT": {
       const comment = await prisma.comment.findUnique({
         where: {

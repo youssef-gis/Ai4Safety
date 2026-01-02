@@ -1,6 +1,6 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import * as attachmentData from "@/features/supplements/data";
 import * as attachmentSubjectDTO from "@/features/supplements/dto/attachment-subject-dto";
 import { generateS3Key } from "@/features/supplements/utils/generate-s3-key";
@@ -25,44 +25,43 @@ export async function GET(
     case "ANALYSIS":
       subject = attachmentSubjectDTO.fromAnalysis(attachment.analysis);
       break;
+    case "DETECTION":
+      subject = attachmentSubjectDTO.fromDetection(attachment.detection);
+      break;
     case "COMMENT":
       subject = attachmentSubjectDTO.fromComment(attachment.comment);
       break;
   }
 
   if (!subject || !attachment) {
-    throw new Error("Subject not found");
+    return new NextResponse("Subject not found", { status: 404 });
   }
 
   if (!subject.organizationId) {
-  throw new Error("Organization ID is required to generate presigned URL");
-}
+    return new NextResponse("Organization ID missing", { status: 400 });
+  }
 
   const presignedUrl = await getSignedUrl(
     s3,
     new GetObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: generateS3Key({
-        organizationId: subject.organizationId , // ?? 'default-org', // Fallback value,
-        projectId: attachment.inspection?.projectId,
-        entityId: subject.entityId,
-        entity: attachment.entity,
-        fileName: attachment.name,
-        attachmentId: attachment.id,
-      }),
+      Key: attachment.url!,
+      ResponseContentDisposition: `attachment; filename="${attachment.name}"`
     }),
     { expiresIn: 5 * 60 }
   );
 
-  const response = await fetch(presignedUrl);
+  // const response = await fetch(presignedUrl);
 
-  const headers = new Headers();
-  headers.append(
-    "content-disposition",
-    `attachment; filename="${attachment.name}"`
-  );
+  // const headers = new Headers();
+  // headers.append(
+  //   "content-disposition",
+  //   `attachment; filename="${attachment.name}"`
+  // );
 
-  return   new Response(response.body, {
-    headers,
-  })
+  // return   new Response(response.body, {
+  //   headers,
+  // });
+
+  return NextResponse.redirect(presignedUrl);
 }

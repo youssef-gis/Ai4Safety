@@ -20,6 +20,13 @@ export const getAttachments = async (
         },
       });
     }
+    case "DETECTION": {
+      return await prisma.supplement.findMany({
+        where: {
+          detectionId: entityId,
+        },
+      });
+    }
     case "COMMENT": {
       return await prisma.supplement.findMany({
         where: {

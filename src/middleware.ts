@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
   // D. SECURITY: Check for Session Cookie
   // (Adjust cookie name based on your auth provider: 'auth_session', 'next-auth.session-token', etc.)
   const sessionCookie = request.cookies.get("session"); 
-  console.log('Middleware Running')
+  //console.log('Middleware Running')
 
   // A. REDIRECT IF ALREADY LOGGED IN
   // If user has a session and tries to visit Sign-In/Up/Verify, send them to dashboard

@@ -1,0 +1,19 @@
+{
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml"
+  },
+  "ignore": {
+    "useGitignore": true,
+    "customPatterns": [
+      "node_modules/**",
+      "public/**",
+      "dist/**",
+      ".next/**",
+      "yarn.lock",
+      "package-lock.json",
+      "**/.env",       
+      "**/.env.*"      
+    ]
+  }
+}

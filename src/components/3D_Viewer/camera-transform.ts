@@ -23,29 +23,29 @@ export const computeLocalToECEFTransform = (
  * Alternative: If  WebODM output uses UTM coordinates,
  * you need to compute the UTM zone and transform
  */
-export const computeUTMToECEFTransform = async (
-    CesiumJs: any,
-    utmZone: number,
-    isNorthernHemisphere: boolean,
-    referencePoint: { easting: number; northing: number; altitude: number }
-): Promise<any> => {
-    // This requires a UTM to WGS84 conversion
-    // For now, we'll use the ENU approach which works if the reference is correct
+// export const computeUTMToECEFTransform = async (
+//     CesiumJs: any,
+//     utmZone: number,
+//     isNorthernHemisphere: boolean,
+//     referencePoint: { easting: number; northing: number; altitude: number }
+// ): Promise<any> => {
+//     // This requires a UTM to WGS84 conversion
+//     // For now, we'll use the ENU approach which works if the reference is correct
     
-    // we might need to use proj4js for accurate UTM conversion
+//     // we might need to use proj4js for accurate UTM conversion
     
-    const proj4 = (await import('proj4')).default;
+//     const proj4 = (await import('proj4')).default;
     
-    // Define UTM projection
-    const utmProj = `+proj=utm +zone=${utmZone} ${isNorthernHemisphere ? '+north' : '+south'} +datum=WGS84`;
-    const wgs84 = '+proj=longlat +datum=WGS84';
+//     // Define UTM projection
+//     const utmProj = `+proj=utm +zone=${utmZone} ${isNorthernHemisphere ? '+north' : '+south'} +datum=WGS84`;
+//     const wgs84 = '+proj=longlat +datum=WGS84';
     
-    // Convert reference point to WGS84
-    const [lon, lat] = proj4(utmProj, wgs84, [referencePoint.easting, referencePoint.northing]);
+//     // Convert reference point to WGS84
+//     const [lon, lat] = proj4(utmProj, wgs84, [referencePoint.easting, referencePoint.northing]);
     
-    return computeLocalToECEFTransform(CesiumJs, { 
-        lon, 
-        lat, 
-        alt: referencePoint.altitude 
-    });
-};
+//     return computeLocalToECEFTransform(CesiumJs, { 
+//         lon, 
+//         lat, 
+//         alt: referencePoint.altitude 
+//     });
+// };
