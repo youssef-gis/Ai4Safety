@@ -195,7 +195,7 @@ export const ImageViewerModal = ({
         };
 
         // 1. Draw Nearby Defects (Ghost Markers)
-        // ... (Ghost marker rendering if needed separately, currently handled via DOM overlay in your code)
+       
 
         // 2. Draw Saved Shape
         if (savedShape) {
@@ -432,7 +432,7 @@ return (
                         onDoubleClick={handleDoubleClick}
                     />
                     
-                    {/* Render Ghost Markers (DOM layer) */}
+               
                     {imageLoaded && ghostMarkers.map((marker, i) => (
                         <div key={marker.id || i} className="absolute flex items-center justify-center group cursor-pointer z-20" style={{ left: marker.pixelX, top: marker.pixelY, transform: 'translate(-50%, -50%)' }} onClick={(e) => { e.stopPropagation(); alert(`Existing defect #${marker.id.substring(0,8)} found here.`); }}>
                             <div className="relative">

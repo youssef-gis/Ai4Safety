@@ -34,10 +34,9 @@ export async function GET(
       subFolder = "assets/unzipped_assets/3d_tiles/model/";
 
   } else if (filename.match(/\.(jpg|jpeg|png|JPG|PNG)$/)) {
-      // Logic: Raw images usually live in 'uploaded_images' (or wherever you store raw drone photos)
+     
       subFolder = ""; 
       //  CASE SENSITIVITY FIX:
-      // If the request is lowercase 'dji_...jpg' but S3 has 'DJI_...JPG', swap it.
       if (filename.includes("dji_") && filename.endsWith(".jpg")) {
           filename = filename.replace("dji_", "DJI_").replace(".jpg", ".JPG");
       }

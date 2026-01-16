@@ -1,4 +1,4 @@
-type FeatureKey = "inspections" | "tickets";
+type FeatureKey = "inspections"  | "projects" | "defects";
 
 export const findIdsFromText = (key: FeatureKey, value: string) => {
   const regexPattern = new RegExp(`/${key}/[a-zA-Z0-9]+`, "g");

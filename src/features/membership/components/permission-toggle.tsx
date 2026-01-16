@@ -41,8 +41,7 @@ export const PermissionToggle = ({
             <SubmitButton 
                 icon={permissionValue ? <LucideCheck /> : <LucideBan />}
                 size="icon"
-                variant={permissionValue ? 'secondary': 'ghost'} // Ghost looks cleaner in a table
-                //className={permissionValue ? "text-green-600 bg-green-50 hover:bg-green-100" : "text-muted-foreground"}
+                variant={permissionValue ? 'secondary': 'ghost'}
                 disabled={disabled}
             />
         </Form>

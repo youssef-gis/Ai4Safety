@@ -17,7 +17,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// Removed ScrollArea import to fix clipping issues
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -64,7 +63,7 @@ const EvidenceFiles = ({ defect }: { defect: Detection & { attachments?: Supplem
           <div key={file.id} className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors group">
             
             <div className="flex items-center gap-3 min-w-0">
-                {/* Icon based on file type (simple check) */}
+
                 {file.name.endsWith('.pdf') ? (
                   <FileText className="w-4 h-4 text-red-500 shrink-0" />
                 ) : (
@@ -181,17 +180,16 @@ export function InspectorPanel({
     d.id.includes(searchQuery)
   );
 
-  // Determine if we are in "Create Mode"
   const isCreating = !!draftDefect;
   const activeDefect = defects.find(d => d.id === focusedDefectId);
 
-  // If Creating, show Form. If Active, show Details. Else, show List.
+
   const showDetailView = activeDefect || isCreating;
 
   return (
     <div className="flex flex-col h-full w-full bg-background/95 backdrop-blur-sm">
       
-      {/* HEADER */}
+
       <div className="flex-none h-14 px-4 border-b border-border flex items-center justify-between bg-card/50">
         {showDetailView ? (
           <div className="flex items-center gap-1 overflow-hidden">
@@ -256,7 +254,7 @@ export function InspectorPanel({
                   </TabsList>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <div className="p-4 pb-24"> {/* Added heavy bottom padding to ensure button visibility */}
+                  <div className="p-4 pb-24"> 
                       <TabsContent value="evidence" className="mt-0 space-y-6">
                           {activeDefect && <EvidenceFiles defect={activeDefect} />} 
                           <div className="h-px bg-border w-full" />
@@ -299,7 +297,7 @@ export function InspectorPanel({
                 </div>
               </Tabs>
             </>):(
-              /* B. CREATE NEW DEFECT FORM */  
+            
             <>
             <div className="p-4 overflow-y-auto">
                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
@@ -321,12 +319,12 @@ export function InspectorPanel({
                     canDelete={canDeleteDefect} 
                     canEdit={canEditDefect}
                     onCancel={() => {
-                        // Clear draft when cancelling
+                        
                         onSelectDefect(null); 
                     }}
                     onFormSuccess={() => {
                         handleFormSuccess();
-                        onClose(); // Close panel after create
+                        onClose(); 
                     }}
                     onOpenImage={() => {}} 
                 />
@@ -335,7 +333,7 @@ export function InspectorPanel({
  
           </div>
         ) : (
-          // === LIST VIEW ===
+        
           <div className="h-full flex flex-col">
             <div className="flex-none p-4 pb-2">
               <div className="relative">
@@ -356,7 +354,7 @@ export function InspectorPanel({
               </Button>
             </div>
 
-            {/* CHANGE: Replaced ScrollArea here as well for consistency */}
+           
             <div className="flex-1 overflow-y-auto">
               <div className="p-4 flex flex-col gap-3 pb-20">
                 {filteredDefects.length === 0 ? (

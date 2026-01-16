@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
-// Mock Data for the chart
+
 const SEVERITY_DATA = [
   { name: 'Critical', value: 2, color: '#ef4444' },
   { name: 'High', value: 5, color: '#f97316' },

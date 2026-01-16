@@ -21,7 +21,7 @@ const renderLink = ({ attributes, content }: IntermediateRepresentation) => {
     maybeParsedContent = url.replace("/tickets/", "Ticket: #");
   }
 
-  // add other feature paths if needed
+
 
   return (
     <Link href={url} {...props} onClick={handleClick} className="underline">

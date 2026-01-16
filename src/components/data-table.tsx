@@ -184,7 +184,7 @@ export function DataTable<TData, TValue>({
             Next
           </Button>
       </div> */}
-            {/* Pagination Controls  sticky bottom-0 */}
+           
       <div className="flex items-center justify-between px-2 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 border-t">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}

@@ -8,7 +8,7 @@ import { DefectCandidate } from "@/components/3D_Viewer/hooks/use-drawing-manage
 import { Entity } from "cesium";
 import { useRouter } from "next/navigation";
 import { MapLayer } from "@/components/3D_Viewer/types/map";
-// Removed Portal import
+
 
 type AnalaysisProps= {
   proxyBaseUrl:string;
@@ -34,7 +34,7 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
     const [editingDefect, setEditingDefect] = useState<Detection | null>(null);
     const [defectToEditImage, setDefectToEditImage] = useState<Detection | null>(null);
 
-    // Handler passed to the form
+
     const handleOpenImageEdit = (defect: Detection) => {
         setDefectToEditImage(defect);
     };
@@ -51,13 +51,13 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
 
     const handleDefectSelected = (defect: Detection) => {
             if (onDefectSelected) {
-                // New Architecture: Notify parent to open the Side Panel
+                // Notify parent to open the Side Panel
                 onDefectSelected(defect);
                 
                 // We clear the local editingDefect so we don't show the duplicate floating form
                 setEditingDefect(null);
             } else {
-                // Old Architecture: Show floating form inside viewer (fallback)
+                //  Show floating form inside viewer (fallback)
                 setEditingDefect(defect);
             }
             setDefectCandidate(null); 
@@ -75,7 +75,6 @@ export const Analysis3DViewer = ({ proxyBaseUrl,camerasUrl,tilesetUrl, inspectio
         setEditingDefect(null);
     };
 
-        // Common style for both forms 
     const formContainerStyle = "absolute top-2 right-2 z-[3000] w-80 md:w-96 bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[calc(100%-1rem)]";
 
 

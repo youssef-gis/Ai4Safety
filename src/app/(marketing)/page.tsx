@@ -12,7 +12,7 @@ import {
   Layers
 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link'; // IMPROVEMENT: Import Link
+import Link from 'next/link'; 
 import { signInPath, signUpPath } from '@/path';
 
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -52,25 +52,24 @@ const Home = () => {
                 </div>
                 <div className="flex items-center gap-4">
                   {navItem}
-                {/* <YourExistingDarkModeToggle /> */}
+               
                 <button className="md:hidden p-2 text-slate-900 dark:text-slate-200">
                     <Menu className="w-6 h-6" />
                 </button>
                 </div>
         </nav>
-      {/* Hero Section */}
+      
       <header className="relative pt-20 pb-32 px-6 overflow-hidden">
-          {/* IMPROVEMENT: Optimized Background Image using Next/Image */}
           <div className="absolute inset-0 -z-10">
             <Image 
               src="/drone_survey.png"
               alt="Drone survey background"
               fill
               style={{ objectFit: 'cover' }}
-              priority // Loads immediately for LCP score
+              priority 
               quality={85}
             />
-             {/* Dark mode friendly overlay */}
+            
             <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-slate-950 dark:via-slate-950/80 dark:to-transparent"></div>
           </div>
 
@@ -104,19 +103,17 @@ const Home = () => {
               </div>
             </div>
             
-            {/* 3D Viewer Mockup */}
             <div className="relative">
-              {/* Background glow - adjusted opacity */}
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-3xl transform rotate-2 blur-lg opacity-70 dark:from-blue-900/30 dark:to-indigo-900/30"></div>
               
-              {/* Image Container - REMOVED aspect-[4/3] and REMOVED bg-slate-950 */}
+              
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                 <Image
-                  width={1200}  // Use high res width
-                  height={800}  // Use high res height (defines the natural aspect ratio)
+                  width={1200}  
+                  height={800}  
                   src="/cesium_tilset.png"
                   alt="AI4Safety 3D Viewer with AI Detections"
-                  className="w-full h-auto" // This ensures it fills width and adjusts height automatically
+                  className="w-full h-auto" 
                   priority
                 />
               </div>
@@ -124,7 +121,7 @@ const Home = () => {
           </div>
       </header>
 
-      {/* Features Grid */}
+      
       <section id="features" className="py-24 bg-slate-50 dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -166,7 +163,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* How it Works */}
+   
       <section id="how-it-works" className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -205,7 +202,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-24 px-6 bg-blue-900 text-white rounded-t-[3rem] mt-12 dark:bg-blue-800">
         <div className="max-w-4xl mx-auto text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold leading-tight dark:text-white">Ready to modernize your inspection workflow?</h2>
@@ -225,7 +221,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Footer */}
+   
       <footer className="bg-slate-950 text-slate-400 py-12 px-6 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-8 mb-12">
             <div>
@@ -239,7 +235,7 @@ const Home = () => {
             </div>
             <div>
                 <h4 className="text-white font-bold mb-4">Product</h4>
-                {/* IMPROVEMENT: Used Link components instead of a tags */}
+                
                 <ul className="space-y-2 text-sm">
                     <li><Link href="/features" className="hover:text-white">Features</Link></li>
                     <li><Link href="/integrations" className="hover:text-white">Integrations</Link></li>

@@ -24,7 +24,7 @@ export function InspectionActions({ inspectionId, defects, projectName }: Inspec
       setIsExporting(true);
       toast.info("Generating report...");
 
-      // 1. Create the PDF instance
+   
       const blob = await pdf(
         <InspectionPDFTemplate 
             inspectionId={inspectionId} 
@@ -33,7 +33,6 @@ export function InspectionActions({ inspectionId, defects, projectName }: Inspec
         />
       ).toBlob();
 
-      // 2. Save it
       saveAs(blob, `Inspection_Report_${inspectionId}.pdf`);
       
       toast.success("Report downloaded!");
@@ -62,7 +61,7 @@ export function InspectionActions({ inspectionId, defects, projectName }: Inspec
         {/* {isExporting ? "Exporting..." : "Export PDF"} */}
       </Button>
 
-      {/* add a secondary action later*/}
+  
       {/* <Button variant="ghost" size="icon" className="h-8 w-8">
          <MoreHorizontal className="h-4 w-4" />
       </Button> */}

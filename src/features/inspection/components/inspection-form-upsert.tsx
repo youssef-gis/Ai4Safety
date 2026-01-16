@@ -41,7 +41,6 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
 
     const datePickerImperativeHandleRef =useRef<ImperativeHandleFromDatePicker>(null);
     
-    // Generate a unique ID for the attachment on the server
     
     async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
@@ -51,7 +50,7 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
         const uploadedKeys: string[] = [];
 
         for (const file of Array.from(files)) {
-        // 1. Ask backend for a presigned URL
+   
             const presignRes = await fetch("/api/aws/s3/supplements/presign-upload", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -68,21 +67,21 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
 
             const { url, fields } = await presignRes.json();
 
-      // 2. Build FormData for S3
+ 
             const formData = new FormData();
             Object.entries(fields).forEach(([key, value]) => {
                 formData.append(key, value as string);
                 });
             formData.append("file", file);
 
-      // 3. Upload directly to S3
+ 
             const uploadRes = await fetch(url, {
                         method: "POST",
                         body: formData,
                         });
 
             if (uploadRes.ok) {
-                    uploadedKeys.push(fields.key); // store the uploaded file's S3 key
+                    uploadedKeys.push(fields.key); 
         } else {
                     console.error("Failed to upload file:", file.name);
         }
@@ -101,7 +100,7 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
      <Form action={action} actionState={actionState} onSuccess={handleSuccess} >
         <div className="space-y-6">
             
-            {/* Section 1: Basic Info */}
+        
             <div className="space-y-4">
                 <div className="grid gap-2">
                     <Label htmlFor="title">Dataset Name</Label>
@@ -121,11 +120,10 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
                 </div>
             </div>
 
-            {/* Section 2: Processing Jobs (Visual Cards) */}
             <div className="space-y-3">
                 <Label>AI Processing Jobs</Label>
                 <div className="grid grid-cols-2 gap-4">
-                    {/* 3D Reconstruction Card */}
+                  
                     <label className="cursor-pointer">
                         <input type="checkbox" name="jobs" value="THREE_D_MODELING" className="peer sr-only" />
                         <div className="flex flex-col items-center justify-center p-4 border-2 border-muted rounded-xl hover:bg-muted/50 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
@@ -134,7 +132,6 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
                         </div>
                     </label>
 
-                    {/* Crack Detection Card */}
                     <label className="cursor-pointer">
                         <input type="checkbox" name="jobs" value="CRACK_DETECTION" className="peer sr-only" />
                         <div className="flex flex-col items-center justify-center p-4 border-2 border-muted rounded-xl hover:bg-muted/50 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
@@ -146,7 +143,7 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
                 <FieldErrorMsg actionState={actionState} name="jobs" />
             </div>
 
-            {/* Section 3: File Upload (Better UX) */}
+           
             <div className="space-y-2">
                 <Label>Drone Imagery</Label>
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 text-center hover:bg-muted/20 transition-colors relative">
@@ -177,7 +174,7 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
                 </div>
                 {uploading && <p className="text-xs text-blue-500 animate-pulse">Uploading to secure storage...</p>}
                 
-                {/* Hidden inputs for keys */}
+               
                 {s3Keys.map((key, idx) => (
                     <input key={idx} type="hidden" name="files" value={key} />
                 ))}

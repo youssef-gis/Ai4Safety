@@ -1,6 +1,6 @@
 // utils/camera-math.ts (or put at top of cesium.tsx)
 import { Cartesian3, Math as CesiumMath, Entity, Cartesian2, Scene, defined, Quaternion, Matrix4, Matrix3 } from 'cesium';
-import { CesiumType } from '../types/cesium'; // Your type definition
+import { CesiumType } from '../types/cesium';
 
 interface CameraScore {
   entity: Entity;
@@ -79,8 +79,7 @@ export const findBestCamera = (
         incidenceScore = Math.max(0, dot); 
     }
 
-    // 4. FINAL SCORE FORMULA
-    // We give HUGE weight (x200) to Incidence to force oblique views for inclined roofs
+
     const score = (viewAlignment * 100) - (distance * 0.5) + (incidenceScore * 200);
 
     if (score > bestScore) {
@@ -121,7 +120,7 @@ export function projectWorldToImage(
     // 5. Project to Image Plane (Pinhole Model)
     // x_screen = (focal * x_local) / -z_local
     // Note: We need focal length in PIXELS. If your focal is in mm, you need sensor width.
-    // Assuming 'focal' passed here is already scaled to pixels (common in SfM outputs like Colmap/ODM)
+   
     
     // If focal is 0 or missing, approximate using a standard FOV (e.g. 60 deg)
     const effectiveFocal = intrinsics.focal || (intrinsics.width * 0.8); 

@@ -8,8 +8,6 @@ export const sendEmailInvitation = async (
   emailInvitationLink: string
 ) => {
   return await resend.emails.send({
-    // your own custom domain here
-    // or your email that you used to sign up at Resend
     from: "no-reply@updates.offerjet.store",
     to: email,
     subject: `Invitation to ${organizationName} from Ai4Safety`,

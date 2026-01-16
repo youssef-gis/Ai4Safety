@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Generate a unique ID for the attachment on the server
+  
     const attachmentId = randomUUID();
     const s3Key = generateS3Key({
       organizationId: activeOrganization.id,
@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
       entity: entity ,
       fileName: filename,
       attachmentId,
-      inspectionId // Pass the context (if it exists)
+      inspectionId 
     });
-    // You can add conditions here for file size, type, etc.
+   
     const { url, fields } = await createPresignedPost(s3, {
       Bucket: process.env.AWS_BUCKET_NAME || '',
-      Key: s3Key, // A better key structure
+      Key: s3Key, 
       Fields: {
         'Content-Type': contentType,
       },

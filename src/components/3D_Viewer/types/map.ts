@@ -4,6 +4,6 @@ export type MapLayer = {
   type: '3D_TILES' | 'IMAGERY' | 'POINT_CLOUD';
   url: string;
   visible: boolean;
-  opacity?: number; // Useful for orthophotos
+  opacity?: number; 
   isBaseLayer?: boolean; // To know which one to "Zoom To"
 };

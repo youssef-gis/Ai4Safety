@@ -1,8 +1,6 @@
 import { AnalysisType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-
-
 type CreateInspectionArgs = {
   id: string;
   userId: string;

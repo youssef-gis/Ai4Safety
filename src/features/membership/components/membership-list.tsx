@@ -50,7 +50,7 @@ export const MembershipList = async({organizationId}:MembershipListPageProp) => 
                             userId= {membership.userId}
                         />
                     )
-                    // {membershipMoreMenu}
+                 
                     const buttons= <>
                                     {deleteButton}</>;
                     return(

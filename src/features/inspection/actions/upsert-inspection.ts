@@ -115,7 +115,7 @@ const UpsertInspection = async (projectId: string ,
             "toast","Inspection started you will recieve \n an email when the inspection complete",
         ); 
 
-    redirect(inspectionsPath(projectId)); // 👈 navigate to inspections page
+    redirect(inspectionsPath(projectId)); 
     //return toActionState('Success','Inspection Started')
 };
 

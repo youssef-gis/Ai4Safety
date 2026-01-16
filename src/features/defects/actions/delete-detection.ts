@@ -5,7 +5,7 @@ import { ActionState, formErrorToActionState, toActionState } from "@/components
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { IsOwner } from "@/features/auth/utils/is-owner";
 import { prisma } from "@/lib/prisma";
-import { ticketsPath } from "@/path";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDefectPermissions } from "../permissions/get-defect-permissions";

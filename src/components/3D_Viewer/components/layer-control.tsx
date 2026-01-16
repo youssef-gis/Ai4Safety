@@ -30,10 +30,10 @@ export const LayerControl = ({
   toggleAllDefects
 }: LayerControlProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDefectsExpanded, setIsDefectsExpanded] = useState(true); // Start expanded
+  const [isDefectsExpanded, setIsDefectsExpanded] = useState(true); 
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Check if all are true or some are true
+  
   const allDefectsVisible = Object.values(severityVisibility).every(Boolean);
   const someDefectsVisible = Object.values(severityVisibility).some(Boolean);
 

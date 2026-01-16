@@ -51,7 +51,7 @@ type DetectionUpdateFormProps = {
 
 const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry, 
             onCancel, onFormSuccess, canDelete, canEdit, onOpenImage} : DetectionUpdateFormProps) => {
-    // 1. Memoize ID: Use existing ID or generate a new UUID for uploads
+    
     const defectId = useMemo(() => detection?.id || crypto.randomUUID(), [detection]);
 
     const [uploading, setUploading] = useState(false);
@@ -64,7 +64,7 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
     
     //const datePickerImperativeHandleRef =useRef<ImperativeHandleFromDatePicker>(null);
 
-    // 3. Handle File Upload (Similar to InspectionUpsertForm)
+    
     async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
         if (!files || files.length === 0) return;
@@ -73,7 +73,7 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
         const uploadedKeys: string[] = [];
 
         for (const file of Array.from(files)) {
-            // Ask backend for a presigned URL
+       
             const presignRes = await fetch("/api/aws/s3/supplements/presign-upload", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -94,14 +94,13 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
 
             const { url, fields } = await presignRes.json();
 
-            // Build FormData for S3
+            
             const formData = new FormData();
             Object.entries(fields).forEach(([key, value]) => {
                 formData.append(key, value as string);
             });
             formData.append("file", file);
 
-            // Upload directly to S3
             const uploadRes = await fetch(url, {
                 method: "POST",
                 body: formData,
@@ -114,7 +113,6 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
             }
         }
 
-        // Add new keys to existing ones (if any)
         setS3Keys(prev => [...prev, ...uploadedKeys]);
         setUploading(false);
     }
@@ -128,14 +126,14 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
     const handleDelete = async () => {
         if (!detection) return;
         
-        // Simple browser confirmation
+        
         if (confirm("Are you sure you want to delete this defect?")) {
             startDeleteTransition(async () => {
                 const result = await deleteDefect(detection.id);
                 if (result.status === 'Success') {
-                    onFormSuccess(); // This will close the form and refresh the map
+                    onFormSuccess(); 
                 } else {
-                    alert(result.message); // Show an error
+                    alert(result.message); 
                 }
             });
         }
@@ -173,7 +171,7 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Source Image
                             </span>
-                            {/* This badge confirms we have 2D data */}
+                          
                             {detection.annotation2D && (
                                 <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                                     Has Drawing
@@ -189,7 +187,7 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => onOpenImage(detection)} // 👈 Open Modal in Edit Mode
+                                onClick={() => onOpenImage(detection)} 
                                 className="gap-2 h-8"
                             >
                                 <ImageIcon className="w-3 h-3" />
@@ -257,7 +255,7 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
                     className="w-full p-2 border border-gray-300 rounded-md " rows={2}></Textarea>
             </div>
 
-            {/* --- NEW FILE UPLOAD SECTION --- */}
+     
             <div className="mb-4">
                 <Label className="block text-sm font-medium mb-1">Attachments</Label>
                 <div className="border border-dashed border-input rounded-md p-4 text-center hover:bg-accent/50 transition-colors relative">
@@ -277,7 +275,7 @@ const DetectionUpsertForm = ({detection, projectId, inspectionId, geometry,
                     </div>
                 </div>
                 
-                {/* Visual feedback for selected/uploaded files */}
+              
                 {s3Keys.length > 0 && (
                     <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full bg-green-500" />

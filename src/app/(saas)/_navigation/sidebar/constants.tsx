@@ -2,8 +2,7 @@ import { LucideBook, LucideBookCopy, LucideCircleUser,
         LucideLibrary, LucideProjector, LucideUsers } from "lucide-react";
 import { NavItem } from "./types";
 import { homePath, organizationPath, 
-    profilePath, ticketsByOrganizationPath, 
-    ticketsPath, projectsPath } from "@/path";
+    profilePath, projectsPath } from "@/path";
 
 export const navItems: NavItem[] = [
     {

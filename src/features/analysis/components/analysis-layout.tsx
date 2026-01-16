@@ -60,7 +60,7 @@ export function AnalysisLayout({
     }
   };
 
-// Handler for when user clicks the 3D model
+
   const handleDraftCreated = (data: { positions: any[] }) => {
       // 1. Extract the position (assuming single point for now)
       const position = data.positions[0]; 
@@ -94,7 +94,7 @@ export function AnalysisLayout({
       className="relative h-full w-full overflow-hidden bg-black group"
     >
       
-      {/* 1. LAYER A: 3D VIEWER (BACKGROUND) */}
+      {/* 3D VIEWER  */}
       <div className="absolute inset-0 z-0">
         <Analysis3DViewer 
             tilesetUrl={tilesetUrl}
@@ -111,16 +111,13 @@ export function AnalysisLayout({
         />
       </div>
 
-      {/* 2. LAYER B: FLOATING HUD (The "Command Bar") */}
-
-      {/* BOTTOM RIGHT: Main Action Bar */}
       <div className={cn(
           "absolute bottom-6 right-6 z-20 flex items-center p-1.5 gap-2 rounded-xl transition-all duration-300",
           "bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl", 
           isInspectorOpen ? "translate-x-[-384px] md:translate-x-[-400px]" : "translate-x-0"
       )}>
         
-        {/* Analytics Toggle */}
+  
         <Button 
             variant={isAnalyticsOpen ? "secondary" : "outline"} 
             size="sm" 
@@ -174,7 +171,7 @@ export function AnalysisLayout({
         </Button>
       </div>
 
-      {/* 3. LAYER C: INSPECTOR PANEL (SLIDE IN FROM RIGHT) */}
+      
       <div 
         className={cn(
           "absolute top-0 right-0 h-full z-30 transition-transform duration-300 ease-in-out shadow-2xl border-l border-border/50 bg-background",
@@ -200,7 +197,7 @@ export function AnalysisLayout({
         />
       </div>
 
-      {/* 4. LAYER D: ANALYTICS DRAWER (SLIDE UP FROM BOTTOM) */}
+    
       <AnalyticsDrawer 
           isOpen={isAnalyticsOpen} 
           onClose={() => setIsAnalyticsOpen(false)} 

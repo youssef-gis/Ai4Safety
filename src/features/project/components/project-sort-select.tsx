@@ -5,8 +5,6 @@ import { sortOptions, sortParser } from "../search-params";
 
 type ProjectSortSelectOptions = {
     options: SortSelectOptions[];
-    
-
 }
 
 export const ProjectSortSelect = ({options}: ProjectSortSelectOptions) => {

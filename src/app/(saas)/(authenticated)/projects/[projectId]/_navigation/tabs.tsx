@@ -1,7 +1,7 @@
 'use client';
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
-import {  inspectionsPath,  projectsPath,projectPath } from "@/path";
+import {  inspectionsPath,  projectsPath,projectPath, projectViewerPath } from "@/path";
 import { useParams, usePathname } from "next/navigation";
 
 type ProjectBreadCrumbsProps = {
@@ -21,6 +21,10 @@ export const ProjectBreadCrumbs =  ({ projectName, inspectionTitle }: ProjectBre
             { 
                 title: "📊 Dashboard", 
                 href: projectPath(params.projectId) 
+            },
+            { 
+                title: "🌍 3D Spatial Hub",  // NEW LINK
+                href: projectViewerPath(params.projectId) 
             },
             { 
                 title: "📋 Inspection List", 
@@ -54,16 +58,3 @@ export const ProjectBreadCrumbs =  ({ projectName, inspectionTitle }: ProjectBre
      );
 }
 
-// [
-//                 {title: 'Projects', href:projectsPath()},
-//                 {title: params.projectId,
-//                     dropdown:[
-//                             {title:"Project Dashboard",
-//                             href: projectPath(params.projectId)},
-//                             {title: "Inspections",
-//                             href: inspectionsPath(params.projectId)},
-                        
-                        
-//                     ]
-//                 },
-//             ]

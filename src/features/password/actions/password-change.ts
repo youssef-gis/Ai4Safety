@@ -39,7 +39,6 @@ const passwordChange =  async (_actionState:ActionState, formData: FormData) => 
                 return toActionState('Error', 'Incorrect Password', formData);
             }
         
-        // Send emilwith reset link
         await inngest.send({
             name: 'app/password.password-reset',
             data:{userId: auth.user.id},

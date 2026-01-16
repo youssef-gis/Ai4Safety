@@ -19,8 +19,7 @@ import { DETECTION_TYPES, STATUSES, SEVERITIES } from "../constants"
 import { DetectionType, DetectionSeverity, DetectionStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge"
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
+
 export type Defect = {
   id: string;
   type: DetectionType | null;
@@ -51,12 +50,12 @@ export const getColumns = (onViewDefect: (id: string) => void): ColumnDef<Defect
     enableSorting: false,
     enableHiding: false,
   },
-  //  DEFECT TYPE COLUMN (Mapped from Constants)
+  
   {
     accessorKey: "type",
     header: "Defect type",
     cell: ({ row }) => {
-      // Find the constant object that matches the row value
+      
       const type = DETECTION_TYPES.find(
         (t) => t.value === row.getValue("type")
       );
@@ -75,7 +74,7 @@ export const getColumns = (onViewDefect: (id: string) => void): ColumnDef<Defect
       )
     },
   },
-    //  STATUS COLUMN (Mapped from Constants)
+  
   {
     accessorKey: "status",
     header: "Status",
@@ -98,7 +97,7 @@ export const getColumns = (onViewDefect: (id: string) => void): ColumnDef<Defect
       )
     },
   },
-    // SEVERITY COLUMN (Mapped from Constants)
+    
   {
     accessorKey: "severity",
     header: ({ column }) => {
@@ -121,10 +120,10 @@ export const getColumns = (onViewDefect: (id: string) => void): ColumnDef<Defect
         return null
       }
 
-      // Map specific severities to Badge colors
+     
       const variant = 
         severity.value === "CRITICAL" ? "destructive" :
-        severity.value === "HIGH" ? "default" :  "secondary"; // secondary is usually gray
+        severity.value === "HIGH" ? "default" :  "secondary"; 
 
       return (
         <div className="flex items-center">
@@ -144,7 +143,7 @@ export const getColumns = (onViewDefect: (id: string) => void): ColumnDef<Defect
  
       return (
         <div className="flex items-center gap-2">
-            {/* NEW: Quick View Button directly in row */}
+            
             <Button 
                 variant="ghost" 
                 size="sm" 

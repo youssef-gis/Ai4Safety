@@ -7,12 +7,10 @@ import { InspectionMoreMenu } from "./inspection-more-menu";
 import {PermissionToggle} from './permission-toggle';
 import { InspectionDeleteButton } from "./inspection-delete-button";
 import { Inspection } from "@prisma/client";
-import { supabase } from "@/lib/supabase";
-import { RealtimeChannel } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {  analysis_Path, three_D_viewer_Path } from "@/path";
+import {  projectViewerPath } from "@/path";
 
 type InspectionItemPageProp = {
    
@@ -34,12 +32,14 @@ export const InspectionItem = ({ inspection, canDelete}:InspectionItemPageProp) 
     //    )
 
     const detailButton =  (
-                        <Button variant="default" size="icon" >
-                            <Link href={analysis_Path(inspection.projectId, inspection.id)} >
-                                <LucideArrowRightCircle className="h-4 w-4" />                        
-                            </Link>
-                        </Button>
-            );
+        <Button variant="default" size="icon" asChild>
+            {/* 2. Update the Link href */}
+            {/* Pass BOTH projectId and inspectionId to load that specific date */}
+            <Link href={projectViewerPath(inspection.projectId, inspection.id)}>
+                <LucideArrowRightCircle className="h-4 w-4" />                        
+            </Link>
+        </Button>
+        );
 
     const deleteButton= (
             <InspectionDeleteButton 

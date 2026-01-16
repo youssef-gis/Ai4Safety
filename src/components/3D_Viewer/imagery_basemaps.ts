@@ -6,8 +6,7 @@ export const basemapsLayers =  ( CesiumJs: CesiumType,)=>{
         /* Per Carto's website regarding basemap attribution: https://carto.com/help/working-with-data/attribution/#basemaps */
     const CartoAttribution = 'Map tiles by <a href="https://carto.com">Carto</a>, under CC BY 3.0. Data by <a href="https://www.openstreetmap.org/">OpenStreetMap</a>, under ODbL.'
 
-    // Create ProviderViewModel based on different imagery sources
-    // - these can be used without CesiumJs Ion
+
     const imageryViewModels = [];
 
     imageryViewModels.push(new CesiumJs.ProviderViewModel({

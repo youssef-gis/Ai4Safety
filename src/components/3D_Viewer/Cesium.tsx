@@ -141,7 +141,7 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
     });
 
     const parseCameraModel = (cameraString: string) => {
-        // Example: "v2 dji fc330 4000 3000 brown 0.5555"
+       
         const parts = cameraString.split(' ');
         
         return {
@@ -189,8 +189,6 @@ export const CesiumComponent: React.FunctionComponent<CesiumComponentProps> = ({
                 }
 
 
-                // Load a camera icon (You can use a local asset or a base64 string)
-                // Using a standard map pin style for now, or ensure you have /camera-icon.png in public folder
                 const cameraIconUrl = "https://cdn-icons-png.flaticon.com/512/3687/3687416.png"; 
 
                 data.features.forEach((feature: any) => {

@@ -34,7 +34,7 @@ const CredentialList = async ({ organizationId }: CredentialListProps) => {
       </TableHeader>
       <TableBody>
         {credentials.map((credential) => {
-          const buttons = <></>; // TODO add revoke credential button
+          const buttons = <></>; 
 
           return (
             <TableRow key={credential.id}>

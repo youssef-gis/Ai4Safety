@@ -86,10 +86,10 @@ import { DetectionSeverity, DetectionStatus, DetectionType } from "@prisma/clien
 
 type DefectTableProps = {
   inspectionId: string;
-  data: Defect[]; // Data is now passed from parent
+  data: Defect[]; 
   onViewDefect: (id: string) => void;
-  canDeleteDefect: boolean;  // Add this
-  canEditDefect: boolean;    // Add this
+  canDeleteDefect: boolean;  
+  canEditDefect: boolean;   
 };
 
 export default  function DefectTable({ data, onViewDefect, canDeleteDefect, canEditDefect }: DefectTableProps) {

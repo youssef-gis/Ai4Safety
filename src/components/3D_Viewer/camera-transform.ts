@@ -19,10 +19,7 @@ export const computeLocalToECEFTransform = (
     return enuTransform;
 };
 
-/**
- * Alternative: If  WebODM output uses UTM coordinates,
- * you need to compute the UTM zone and transform
- */
+
 // export const computeUTMToECEFTransform = async (
 //     CesiumJs: any,
 //     utmZone: number,

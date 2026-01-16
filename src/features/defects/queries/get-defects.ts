@@ -11,7 +11,7 @@ export const getDefects = async (inspectionId: string) => {
 
     return await prisma.detection.findMany({
         where: {
-            // Filter by the specific inspection
+           
             analysis: {
                 inspectionId: inspectionId,
                 //This inspection belongs to the user's active organization

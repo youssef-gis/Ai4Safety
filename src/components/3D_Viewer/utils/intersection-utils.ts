@@ -21,7 +21,6 @@ export const intersectRayWithPlane = (
     const plane = CesiumJs.Plane.fromPointNormal(pointOnPlane, normal);
     
     // 4. Find intersection
-    // ⚠️ FIX: This returns a Cartesian3 POINT, not a distance number!
     const intersectionPoint = CesiumJs.IntersectionTests.rayPlane(ray, plane);
     
     // If intersectionPoint is defined, return it directly.

@@ -17,7 +17,7 @@ export const inspectionStartedEvent = inngest.createFunction(
       inspectionId
     } = event.data;
 
-    // Call FastAPI /process-job endpoint
+   
     await step.run("call-fastapi", async () => {
       //console.log("Secret Length:", (process.env.INTERNAL_SERVICE_SECRET || "").length);
       const response = await fetch(`${process.env.FASTAPI_URL}/ingest`, {

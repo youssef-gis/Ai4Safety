@@ -6,7 +6,7 @@ import { updateUserProfile } from "../queries/get-user-profile";
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-rerdirect";
 import { revalidatePath } from "next/cache";
 
-// Define the validation schema
+
 const updateProfileSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
@@ -25,14 +25,14 @@ export const updateProfile = async (
       } ;
   
   try {
-    //  Convert FormData to a regular object
+   
     const data = {
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName"),
       role: formData.get("role"),
     };
 
-    // 3. Validate the data
+   
     const validatedFields = updateProfileSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -44,12 +44,10 @@ export const updateProfile = async (
       );
     }
 
-    // 4. TODO: Call your database here (e.g., db.user.update(...))
+    
     console.log("Saving user data:", validatedFields.data);
     try {
-    // ============================================================
-    // 5. TRIGGER THE QUERY FUNCTIO
-    // ============================================================
+   
       await updateUserProfile(user.id, {
         firstName: validatedFields.data.firstName as string,
         lastName: validatedFields.data.lastName as string,
@@ -57,12 +55,12 @@ export const updateProfile = async (
         role: validatedFields.data.role as string | undefined,
       });
 
-      // 6. Refresh the page data
+
       revalidatePath("/account/profile");
 
       return toActionState("Success", "Profile updated successfully", formData);
     } catch (error) {
-      // Handle "Username already taken" error from Prisma
+     
       // if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
       //     return toActionState("Error", "This username is already taken", formData);
       // }

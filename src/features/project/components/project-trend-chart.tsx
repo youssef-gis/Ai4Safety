@@ -67,7 +67,7 @@ export const ProjectTrendChart = ({ data }: ProjectTrendChartProps) => {
                             iconType="circle"
                             formatter={(value) => <span className="text-sm text-muted-foreground ml-1">{value}</span>}
                         />
-                        {/* Stacked Bars for a cleaner look */}
+                      
                         <Bar dataKey="resolved" name="Resolved" stackId="a" fill="#22c55e" radius={[0, 0, 4, 4]} barSize={32} />
                         <Bar dataKey="open" name="Open Issues" stackId="a" fill="#eab308" barSize={32} />
                         <Bar dataKey="critical" name="Critical" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={32} />

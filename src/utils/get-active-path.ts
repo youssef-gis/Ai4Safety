@@ -12,7 +12,6 @@ export const getActivePath = (currentPath: string, navPaths: string[]) => {
     let activePath = '';
     let longestMatch = 0;
 
-    // Find the nav path that is the longest prefix of the current path
     for (const navPath of navPaths) {
         if (currentPath.startsWith('/'+navPath) && navPath.length > longestMatch) {
             longestMatch = navPath.length;

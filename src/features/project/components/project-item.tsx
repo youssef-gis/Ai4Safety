@@ -48,7 +48,6 @@ export const ProjectItem = ({
   comments 
 }: ProjectItemProps) => {
 
-  // 1. GET STATUS CONFIG
   const statusConfig = PROJECT_STATUS_CONFIG[project.status];
   const StatusIcon = statusConfig.icon;
 
@@ -81,7 +80,7 @@ export const ProjectItem = ({
 
   return (
     <div className={clsx('w-full flex flex-col gap-y-4 transition-all', {
-      'max-w-[800px]': isDetail, // Widen detail view slightly
+      'max-w-[800px]': isDetail, 
       'max-w-[420px]': !isDetail,
     })}>
       
@@ -90,7 +89,7 @@ export const ProjectItem = ({
           
           <CardHeader className="pb-3">
             <CardTitle className='flex items-center gap-x-3 text-base font-semibold'>
-              {/* 2. DYNAMIC STATUS ICON */}
+             
               <div className={clsx("p-2 rounded-full bg-opacity-10", statusConfig.bg)}>
                  <StatusIcon className={clsx("w-5 h-5", statusConfig.color)} />
               </div>
@@ -107,11 +106,11 @@ export const ProjectItem = ({
             </p>
           </CardContent>
 
-          {/* 3. POLISHED METADATA FOOTER */}
+     
           <CardFooter className="flex flex-col gap-y-2 pt-0 items-start">
             <div className="flex items-center gap-x-4 text-xs text-muted-foreground w-full">
               
-              {/* Date & User Group */}
+           
               <div className="flex items-center gap-x-1 shrink-0">
                  <Calendar className="w-3.5 h-3.5" />
                  <span>{format(new Date(project.updatedAt), 'MMM dd, yyyy')}</span>
@@ -124,7 +123,6 @@ export const ProjectItem = ({
 
             </div>
 
-            {/* Address Line */}
             {project.address && (
                <div className="flex items-start gap-x-1 text-xs text-muted-foreground w-full">
                   <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
@@ -134,7 +132,7 @@ export const ProjectItem = ({
           </CardFooter>
         </Card>
 
-        {/* Action Buttons Column */}
+    
         <div className='flex flex-col gap-y-2 shrink-0'>
           {isDetail ? (
             <> {editButton} {moreMenu} </>

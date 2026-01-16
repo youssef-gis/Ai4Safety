@@ -51,7 +51,7 @@ export const fromDetection = (detection: AttachmentSubject | null) => {
   if (!detection || !isDetection(detection)) {
     return null;
   }
-// Traverse the relationship chain
+
   const analysis = detection.analysis;
   const inspection = analysis?.inspection;
   const project = inspection?.project;

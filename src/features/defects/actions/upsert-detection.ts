@@ -2,7 +2,6 @@
 import {  setCookieByKey } from '@/actions/cookies';
 import {formErrorToActionState, ActionState, toActionState} from '@/components/forms/utils/to-action-state';
 import {prisma} from '@/lib/prisma';
-import { three_D_viewer_Path, ticketPath, ticketsPath } from '@/path';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {toCent} from "@/utils/currency"
@@ -16,7 +15,7 @@ import { getDefectPermissions } from '../permissions/get-defect-permissions';
 
 
 const LocationCoordinatesSchema = z.object({ x: z.number(), y: z.number(), z: z.number() });
-// Define the 2D Point Schema
+
 const Point2DSchema = z.object({ x: z.number(), y: z.number() });
 const LocationSchema = z.object({
     type: z.enum(['polyline', 'polygon', 'point']),
@@ -64,7 +63,7 @@ const UpsertDetection = async (id: string ,
                 organizationId: activeOrganization.id
         });
     
-        // Check if updating an existing record
+     
         const existingDefect = await prisma.detection.findUnique({ where: { id } });
 
         if (existingDefect) {
@@ -111,7 +110,7 @@ const UpsertDetection = async (id: string ,
             status: data.Defect_Status,
             notes: data.Defect_Notes,
             
-            locationOn3dModel: locationOn3dModel, // Save cleaned 3D JSON
+            locationOn3dModel: locationOn3dModel, 
             annotation2D: annotation2D ?? undefined,       
             sourceImageId: sourceImageId ?? undefined       
         };
@@ -133,7 +132,7 @@ const UpsertDetection = async (id: string ,
                 console.log("Linking to Defect ID:", id);
 
                 try {
-                    // Log the result of the creation
+                   
                     const newRecord = await attachmentData.createAttachment({
                         name: name,
                         entity: "DETECTION",
@@ -161,7 +160,7 @@ const UpsertDetection = async (id: string ,
 
     if (id){
         await setCookieByKey("toast", "Defect Updated!")
-        //redirect(ticketPath(id));
+        
     }
   
     return toActionState('Success',  'Defect Saved')

@@ -62,7 +62,7 @@ const ProjectMoreMenu = ({project, trigger}: ProjectMoreMenuProps) => {
             onValueChange={handleProjectStatus} >
             {(Object.entries(PROJECT_STATUS_CONFIG) as [ProjectStatus, typeof PROJECT_STATUS_CONFIG[ProjectStatus]][]).map(
                 ([key, config]) => {
-                    const StatusIcon = config.icon; // Get the icon component
+                    const StatusIcon = config.icon; 
                     
                     return (
                     <DropdownMenuRadioItem 

@@ -2,6 +2,8 @@ export const homePath = ()=>"/";
 
 export const projectsPath = ()=>"/projects";
 export const projectPath= (projectId: string)=>`/projects/${projectId}`;
+export const projectViewerPath = (projectId: string, inspectionId?: string) => 
+  `/projects/${projectId}/viewer${inspectionId ? `?inspectionId=${inspectionId}` : ''}`;
 export const projectCreatePath = ()=> '/projects/create';
 export const projectEditPath=  (projectId: string)=> `/projects/${projectId}/edit`;
 export const inspectionsPath = (projectId: string)=>
@@ -10,22 +12,7 @@ export const inspectionsPath = (projectId: string)=>
 export const inspectionsCreatePath = (projectId: string)=>
     `/projects/${projectId}/inspections/create`;
 
-export const three_D_viewer_Path =(projectId:string, inspectionId: string)=>
-    `/projects/${projectId}/inspections/${inspectionId}/analysis/3d_viewer`
-
-export const tabular_analysis_Path =(projectId:string, inspectionId: string)=>
-    `/projects/${projectId}/inspections/${inspectionId}/analysis/table`
-
-export const analysis_Path =(projectId:string, inspectionId: string)=>
-    `/projects/${projectId}/inspections/${inspectionId}/analysis`
-
 export const pricingPath = ()=> '/pricing';
-
-export const ticketsPath = ()=> "/tickets";
-export const ticketsByOrganizationPath = ()=>'/tickets/organization';
-
-export const ticketPath= (ticketId: string)=>`/tickets/${ticketId}`;
-export const ticketEditPath=  (ticketId: string)=> `/tickets/${ticketId}/edit`;
 
 export const emailVerificationPath = ()=> '/email-verification';
 export const emailInvitationPath = ()=> '/email-invitation';

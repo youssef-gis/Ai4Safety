@@ -1,4 +1,3 @@
-// Helper: Convert Rodrigues Vector (from shots.geojson) to Cesium Orientation
 export const getOrientationFromRodrigues = (CesiumJs: any, rotVec: number[]): any => {
     const [rx, ry, rz] = rotVec;
     const theta = Math.sqrt(rx * rx + ry * ry + rz * rz);

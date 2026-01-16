@@ -1,5 +1,3 @@
-// Assuming your prisma client instance is exported as 'db' or 'prisma'
-
 import { prisma } from "@/lib/prisma";
 
 export const getUserProfile = async (userId: string) => {

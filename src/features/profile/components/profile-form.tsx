@@ -24,13 +24,7 @@ type ProfileFormProps = {
   }
 };
 
-const INITIAL_USER = {
-  firstName: "Nathan",
-  lastName: "Roberts",
-  email: "nathan.roberts@ai4safety.com",
-  role: "Senior Safety Officer",
-  initials: "NR",
-};
+
 
 export const ProfileForm = ({user}: ProfileFormProps) => {
   const [actionState, action] = useActionState(updateProfile, EMPTY_ACTION_STATE);
@@ -47,12 +41,11 @@ export const ProfileForm = ({user}: ProfileFormProps) => {
       <Separator className="mb-6" />
 
       <CardContent className="space-y-8 px-0">
-        
-        {/* Avatar Section (Visual Only for now) */}
+      
         <div className="flex items-center gap-x-6">
           <div className="relative flex h-20 w-20 shrink-0 overflow-hidden rounded-full bg-muted border items-center justify-center">
             <span className="text-xl font-medium text-muted-foreground">
-              {/* {INITIAL_USER.initials} */}
+            
               {getInitials()}
             </span>
           </div>
@@ -69,10 +62,10 @@ export const ProfileForm = ({user}: ProfileFormProps) => {
           </div>
         </div>
 
-        {/* Inputs Grid */}
+  
         <div className="grid gap-6 md:grid-cols-2">
           
-          {/* First Name */}
+
           <div className="grid gap-2">
             <Label htmlFor="firstName">First Name</Label>
             <Input
@@ -86,7 +79,7 @@ export const ProfileForm = ({user}: ProfileFormProps) => {
             <FieldErrorMsg name="firstName" actionState={actionState} />
           </div>
 
-          {/* Last Name */}
+   
           <div className="grid gap-2">
             <Label htmlFor="lastName">Last Name</Label>
             <Input
@@ -100,7 +93,7 @@ export const ProfileForm = ({user}: ProfileFormProps) => {
             <FieldErrorMsg name="lastName" actionState={actionState} />
           </div>
 
-          {/* Email (Read Only) */}
+   
           <div className="grid gap-2 md:col-span-2">
             <Label htmlFor="email">Email Address</Label>
             <div className="relative">
@@ -119,7 +112,7 @@ export const ProfileForm = ({user}: ProfileFormProps) => {
             </p>
           </div>
 
-          {/* Job Title */}
+   
           <div className="grid gap-2 md:col-span-2">
             <Label htmlFor="role">Job Title / Role</Label>
             <Input
