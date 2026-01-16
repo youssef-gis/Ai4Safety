@@ -33,7 +33,7 @@ export const getProject = async(projectId:string ) => {
             deletedAt: true,
             
  
-            metadata: true, 
+            //metadata: true, 
 
             // Relation
             user: {
@@ -53,7 +53,7 @@ export const getProject = async(projectId:string ) => {
         organizationId: project.organizationId});
     const isOwner = IsOwner(user, project);
 
-    return {...project, isOwner, permissions:{
+    return {...project, metadata: null, isOwner, permissions:{
         canDeleteProject: isOwner && !!permissions.canDeleteProject,
         canEditProject: isOwner && !!permissions.canEditProject
     }};
