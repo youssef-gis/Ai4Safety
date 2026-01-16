@@ -14,13 +14,17 @@ export const getProject = async(projectId:string ) => {
         return toActionState('Error', 'Not Authenticated');
     };      
 
-    const project= await prisma.project.findUnique({
+    const project = await prisma.project.findUnique({
         where: {
             id: projectId,
         },
-        include: {
-            user :{
-                select:{
+      
+        select: {
+            id: true,
+            name: true,
+            organizationId: true, 
+            user: {
+                select: {
                     username: true
                 }
             }
