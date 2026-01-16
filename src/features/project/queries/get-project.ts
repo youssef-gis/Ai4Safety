@@ -18,11 +18,24 @@ export const getProject = async(projectId:string ) => {
         where: {
             id: projectId,
         },
-      
         select: {
+            // Basic Identity
             id: true,
             name: true,
-            organizationId: true, 
+            organizationId: true,
+            
+            description: true,
+            address: true,
+            status: true,
+            creatorId: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+            
+ 
+            metadata: true, 
+
+            // Relation
             user: {
                 select: {
                     username: true
