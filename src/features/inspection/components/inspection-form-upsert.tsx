@@ -148,7 +148,7 @@ const InspectionUpsertForm = ({projectId} : InspectionUpdateFormProps) => {
                 <Label>Drone Imagery</Label>
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 text-center hover:bg-muted/20 transition-colors relative">
                     <input
-                        name="files"
+                        //name="files"
                         type="file"
                         multiple
                         accept={ACCEPTED.join(",")}
